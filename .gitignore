@@ -37,10 +37,24 @@
 cmake-build-*/
 out/
 build/
+*.swp
+*.swo
 
 # Project specific
-BSharp.exe
+BSharp
 *.bs.tokens
 *.bs.ast
-*.bs
-接下來要做的
+
+# Keep source and documentation files
+!README.md
+!LICENSE
+!grammar.txt
+!*.bs
+!*.txt
+
+# OS generated files
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+Desktop.ini
+.DS_Store
