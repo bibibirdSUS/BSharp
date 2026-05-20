@@ -1,0 +1,47 @@
+program = statements
+statements = (NEWLINE | statement)*
+
+statement = if_stmt | while_stmt | until_stmt | for_stmt | fn_stmt | return_stmt | break_stmt | continue_stmt | expr
+
+if_stmt = 'if' expr 'do' block ('else' 'if' expr 'do' block)* ('else' block)?
+while_stmt = 'while' expr 'do' block
+until_stmt = 'until' expr 'do' block
+for_stmt = 'for' IDENTIFIER '=' expr '~' expr (':' expr)? 'do' block
+return_stmt = 'return' expr?
+break_stmt = 'break'
+continue_stmt = 'continue'
+
+
+fn_stmt = 'fn' IDENTIFIER '(' params? ')' fn_body
+fn_body = '=' expr | 'do' block
+
+params = IDENTIFIER (',' IDENTIFIER)*
+args = expr (',' expr)*
+
+block = statement | (NEWLINE INDENT statements DEDENT)
+
+expr = assignment
+assignment = IDENTIFIER ('=' | '+=' | '-=' | '*=' | '/=' | '%=' | '^=') assignment | logic_or
+
+logic_or = logic_xor ('or' logic_xor)*
+logic_xor = logic_and ('xor' logic_and)*
+logic_and = comparison ('and' comparison)*
+
+comparison = sum (('>=' | '<=' | '>' | '<' | '==' | '!=') sum)*
+
+sum = term (('+' | '-') term)*
+term = power (('*' | '/' | '%') power)*
+power = unary ('^' power)?
+unary = ('+' | '-' | 'not') unary | postfix
+postfix = (call | primary) '!'*
+
+call = IDENTIFIER '(' args? ')'
+
+primary =
+    NUMBER
+  | STRING
+  | IDENTIFIER
+  | 'true'
+  | 'false'
+  | 'null'
+  | '(' expr ')'

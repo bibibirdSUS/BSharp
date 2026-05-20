@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="zh-TW">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>BSharp 語言維基 - Wiki</title>
+        <link rel="stylesheet" href="style.css" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@400;600;700&display=swap"
+            rel="stylesheet"
+        />
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+        />
+    </head>
+    <body>
+        <div class="container">
+            <aside class="sidebar">
+                <div class="logo"><i class="fas fa-code"></i> B# Wiki</div>
+                <nav>
+                    <ul>
+                        <li>
+                            <a href="#intro"
+                                ><i class="fas fa-home"></i> 簡介</a
+                            >
+                        </li>
+                        <li>
+                            <a href="#data-types"
+                                ><i class="fas fa-cube"></i> 資料類型</a
+                            >
+                        </li>
+                        <li>
+                            <a href="#operators"
+                                ><i class="fas fa-calculator"></i> 運算子</a
+                            >
+                        </li>
+                        <li>
+                            <a href="#variables"
+                                ><i class="fas fa-terminal"></i> 變數與賦值</a
+                            >
+                        </li>
+                        <li>
+                            <a href="#control-flow"
+                                ><i class="fas fa-code-branch"></i> 控制流
+                                (If/Else)</a
+                            >
+                        </li>
+                        <li>
+                            <a href="#loops"
+                                ><i class="fas fa-redo"></i> 迴圈 (Loops)</a
+                            >
+                        </li>
+                        <li>
+                            <a href="#functions"
+                                ><i class="fas fa-cube"></i> 函式 (Functions)</a
+                            >
+                        </li>
+                        <li>
+                            <a href="#builtins"
+                                ><i class="fas fa-box-open"></i> 內建函式</a
+                            >
+                        </li>
+                        <li>
+                            <a href="#scoping"
+                                ><i class="fas fa-layer-group"></i> 作用域
+                                (Scoping)</a
+                            >
+                        </li>
+                        <li>
+                            <a href="#repl"
+                                ><i class="fas fa-play"></i> REPL 與執行</a
+                            >
+                        </li>
+                    </ul>
+                </nav>
+            </aside>
+            <main class="content">
+                <section id="intro">
+                    <h1>BSharp 語言簡介</h1>
+                    <p>
+                        BSharp (B#)
+                        是一種簡潔、優雅且功能強大的腳本語言。它採用縮排式語法（Indentation-based），旨在提供極佳的可讀性與直觀的編程體驗。
+                    </p>
+                    <div class="feature-card">
+                        <h3>核心特性</h3>
+                        <ul>
+                            <li>縮排式區塊結構 (不使用 {})</li>
+                            <li>強大的比較運算子鏈結</li>
+                            <li>動態步長 For 迴圈</li>
+                            <li>自動變數作用域管理</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <section id="data-types">
+                    <h2>資料類型</h2>
+                    <p>BSharp 支援以下基礎類型：</p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>類型</th>
+                                <th>範例</th>
+                                <th>說明</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Number</td>
+                                <td><code>3.14</code>, <code>42</code></td>
+                                <td>雙精度浮點數</td>
+                            </tr>
+                            <tr>
+                                <td>Boolean</td>
+                                <td><code>true</code>, <code>false</code></td>
+                                <td>布林值</td>
+                            </tr>
+                            <tr>
+                                <td>Null</td>
+                                <td><code>null</code></td>
+                                <td>表示空值</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <section id="operators">
+                    <h2>運算子</h2>
+                    <h3>算術運算</h3>
+                    <pre><code>+  -  *  /  %  ^ (次方)  ! (階乘)</code></pre>
+
+                    <h3>比較運算 (支援鏈結)</h3>
+                    <pre><code>==  !=  >  <  >=  <=</code></pre>
+                    <p class="note">
+                        支援 Python 風格鏈結：<code>a < b < c</code>
+                    </p>
+
+                    <h3>邏輯運算 (支援短路求值)</h3>
+                    <pre><code>and  or  xor  not</code></pre>
+
+                    <h3>註解</h3>
+                    <p>使用 <code>#</code> 進行單行註解。</p>
+                    <pre><code class="language-bsharp"># 這是一段註解
+x = 10 # 也可以在代碼後方註解</code></pre>
+
+                    <h3>運算優先級 (由高至低)</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>等級</th>
+                                <th>運算子</th>
+                                <th>說明</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1</td>
+                                <td><code>( )</code></td>
+                                <td>括號</td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td><code>!</code></td>
+                                <td>階乘 (Postfix)</td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td><code>^</code></td>
+                                <td>次方 (右結合)</td>
+                            </tr>
+                            <tr>
+                                <td>4</td>
+                                <td><code>-</code>, <code>not</code></td>
+                                <td>負號、邏輯非 (Unary)</td>
+                            </tr>
+                            <tr>
+                                <td>5</td>
+                                <td>
+                                    <code>*</code>, <code>/</code>,
+                                    <code>%</code>
+                                </td>
+                                <td>乘、除、取餘</td>
+                            </tr>
+                            <tr>
+                                <td>6</td>
+                                <td><code>+</code>, <code>-</code></td>
+                                <td>加、減</td>
+                            </tr>
+                            <tr>
+                                <td>7</td>
+                                <td>
+                                    <code>==</code>, <code>!=</code>,
+                                    <code>></code>, <code><</code>,
+                                    <code>>=</code>, <code><=</code>
+                                </td>
+                                <td>比較運算</td>
+                            </tr>
+                            <tr>
+                                <td>8</td>
+                                <td>
+                                    <code>and</code>, <code>or</code>,
+                                    <code>xor</code>
+                                </td>
+                                <td>邏輯運算</td>
+                            </tr>
+                            <tr>
+                                <td>9</td>
+                                <td>
+                                    <code>=</code>, <code>+=</code>,
+                                    <code>-=</code> ...
+                                </td>
+                                <td>賦值運算 (最低)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <section id="variables">
+                    <h2>變數與賦值</h2>
+                    <p>變數不需要宣告，直接賦值即可使用。</p>
+                    <pre><code class="language-bsharp">x = 10
+y = x + 5
+# 複合賦值
+x += 1
+y *= 2</code></pre>
+                    <h3>支援的賦值運算子</h3>
+                    <code>= += -= *= /= %= ^=</code>
+                </section>
+
+                <section id="control-flow">
+                    <h2>控制流</h2>
+                    <p>
+                        使用
+                        <code>do</code> 關鍵字引導區塊，並透過縮排定義層級。
+                    </p>
+                    <pre><code class="language-bsharp">score = 85
+if score >= 90 do
+    result = "A"
+else if score >= 80 do
+    result = "B"
+else
+    result = "C"</code></pre>
+                </section>
+
+                <section id="loops">
+                    <h2>迴圈</h2>
+                    <h3>While 與 Until</h3>
+                    <pre><code class="language-bsharp">i = 0
+while i < 5 do
+    i
+    i += 1
+
+until i == 10 do
+    i += 1
+    i</code></pre>
+
+                    <h3>For 迴圈</h3>
+                    <p>語法：<code>for var = start ~ end [: step] do</code></p>
+                    <pre><code class="language-bsharp"># 0 到 9，步長 2
+for i = 0 ~ 10 : 2 do
+    i
+
+# 動態步長 (步長在每次迭代都會重新計算)
+for i = 1 ~ 20 : i do
+    i</code></pre>
+                    <div class="note">
+                        <strong>動態步長</strong>:
+                        <code>step</code>
+                        是一個表達式，它在每次迴圈迭代時都會重新求值。這允許步長根據變數的當前狀態動態變化。
+                    </div>
+                    <p class="note">
+                        當 <code>for i = a ~ b do...</code> 時，<code>i</code>
+                        的範圍為 <code>a ≤ i < b</code> (左閉右開)。
+                    </p>
+
+                    <h3>迴圈控制</h3>
+                    <p>支援 <code>break</code> 與 <code>continue</code>：</p>
+                    <ul>
+                        <li><code>break</code>: 立即終止並跳出當前迴圈。</li>
+                        <li>
+                            <code>continue</code>:
+                            跳過本次迭代，進入下一次迴圈。
+                        </li>
+                    </ul>
+                </section>
+
+                <section id="functions">
+                    <h2>函式 (Functions)</h2>
+                    <p>BSharp 支援使用 <code>fn</code> 關鍵字定義函式。</p>
+
+                    <h3>表達式函式</h3>
+                    <p>
+                        對於簡單的運算，可以使用 <code>=</code> 直接定義返回值：
+                    </p>
+                    <pre><code class="language-bsharp">fn add(a, b) = a + b
+print(add(5, 3)) # 輸出 8</code></pre>
+
+                    <h3>區塊函式</h3>
+                    <p>
+                        對於複雜的邏輯，使用 <code>do</code> 引導區塊，並使用
+                        <code>return</code> 返回：
+                    </p>
+                    <pre><code class="language-bsharp">fn factorial(n) do
+    if n <= 1 do
+        return 1
+    return n * factorial(n - 1)
+
+print(factorial(5)) # 輸出 120</code></pre>
+
+                    <div class="note">
+                        <strong>遞迴支援</strong>:
+                        函式可以呼叫自身，適合處理遞迴演算法。
+                    </div>
+                </section>
+
+                <section id="builtins">
+                    <h2>內建函式</h2>
+                    <p>BSharp 提供了一些內建函式來協助開發：</p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>函式</th>
+                                <th>說明</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>print(args...)</code></td>
+                                <td>將參數輸出至控制台。</td>
+                            </tr>
+                            <tr>
+                                <td><code>input(prompt?)</code></td>
+                                <td>
+                                    從控制台讀取一行輸入。可選提供提示字串。
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>type(obj)</code></td>
+                                <td>
+                                    返回物件的類型名稱字串（如 "Number",
+                                    "String"）。
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>assert(cond)</code></td>
+                                <td>斷言條件為真，若為假則拋出錯誤。</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <section id="scoping">
+                    <h2>作用域</h2>
+                    <p>BSharp 採用嵌套式作用域（Nested Lexical Scoping）：</p>
+                    <ul>
+                        <li>
+                            <strong>區域化</strong>: <code>if</code>,
+                            <code>while</code>, <code>until</code>,
+                            <code>for</code>
+                            區塊內建立的新變數僅在該區塊內有效，結束後會自動刪除。
+                        </li>
+                        <li>
+                            <strong>向外查找</strong>:
+                            內層作用域可以存取並更新外層作用域中已存在的變數。
+                        </li>
+                        <li>
+                            <strong>For 迴圈變數</strong>:
+                            <code>for i = 0 ~ 10 do</code> 中的
+                            <code>i</code>
+                            被視為該迴圈的區域變數，不會影響外部的
+                            <code>i</code>。
+                        </li>
+                    </ul>
+                    <pre><code class="language-bsharp">x = 10
+if true do
+    x = 20 # 更新外層變數
+    y = 5  # 建立區域變數
+x # 結果為 20
+y # 錯誤：變數 y 已被銷毀</code></pre>
+                </section>
+
+                <section id="repl">
+                    <h2>REPL 與執行</h2>
+                    <p>執行檔案：</p>
+                    <pre><code>./BSharp.exe script.bs</code></pre>
+                    <p>進入 REPL：</p>
+                    <pre><code>./BSharp.exe</code></pre>
+                    <div class="note">
+                        <strong>REPL 技巧</strong>:
+                        <ul>
+                            <li>輸入空行可觸發執行。</li>
+                            <li>
+                                REPL
+                                會自動顯示最後一個表達式的計算結果，因此在測試時不一定需要使用
+                                <code>print</code>。
+                            </li>
+                            <li>輸入 <code>exit</code> 可退出 REPL。</li>
+                        </ul>
+                    </div>
+                </section>
+            </main>
+        </div>
+
+        <script src="script.js"></script>
+    </body>
+</html>
