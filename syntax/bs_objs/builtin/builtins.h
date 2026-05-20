@@ -6,6 +6,7 @@
 #define BSHARP_BUILTINS_H
 #include <functional>
 #include <iostream>
+#include <chrono>
 #include "bs_builtin_function.h"
 #include "../../interpreter/context.h"
 
@@ -55,6 +56,18 @@ static void register_all(const std::shared_ptr<context> &global_ctx) {
             if (!bools->to_boolean())
                 throw std::runtime_error{"Assertion failed"};
         return visitor.get_runtime().null_obj();
+    });
+    // time
+    register_fn(global_ctx, "time", [](interpreter &visitor, const std::vector<bs_obj_ptr> &params) {
+        if (!params.empty())
+            throw std::runtime_error(
+                "time() expects 0 arguments, but " + std::to_string(params.size()) + " were given.");
+
+        const auto now = std::chrono::steady_clock::now();
+        const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch());
+
+        const auto ms = static_cast<double>(duration.count());
+        return visitor.get_runtime().get_number(ms);
     });
 }
 

@@ -42,3 +42,4 @@ build/
 BSharp.exe
 *.bs.tokens
 *.bs.ast
+*.bs
