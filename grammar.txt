@@ -1,7 +1,8 @@
 program = statements
 statements = (NEWLINE | statement)*
 
-statement = if_stmt | while_stmt | until_stmt | for_stmt | fn_stmt | return_stmt | break_stmt | continue_stmt | expr
+statement = if_stmt | while_stmt | until_stmt | for_stmt | fn_stmt
+          | return_stmt | break_stmt | continue_stmt | expr
 
 if_stmt = 'if' expr 'do' block ('else' 'if' expr 'do' block)* ('else' block)?
 while_stmt = 'while' expr 'do' block
@@ -10,7 +11,6 @@ for_stmt = 'for' IDENTIFIER '=' expr '~' expr (':' expr)? 'do' block
 return_stmt = 'return' expr?
 break_stmt = 'break'
 continue_stmt = 'continue'
-
 
 fn_stmt = 'fn' IDENTIFIER '(' params? ')' fn_body
 fn_body = '=' expr | 'do' block
@@ -33,9 +33,6 @@ sum = term (('+' | '-') term)*
 term = power (('*' | '/' | '%') power)*
 power = unary ('^' power)?
 unary = ('+' | '-' | 'not') unary | postfix
-postfix = (call | primary) '!'*
-
-call = IDENTIFIER '(' args? ')'
 
 primary =
     NUMBER
@@ -45,3 +42,6 @@ primary =
   | 'false'
   | 'null'
   | '(' expr ')'
+  | list_literal
+
+list_literal = '[' args? ']'

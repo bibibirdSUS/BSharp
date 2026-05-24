@@ -190,7 +190,7 @@ int run_repl(const bool debug) {
     const auto global_context = std::make_shared<context>();
     register_all(global_context);
 
-    while (true) {
+    for (;;) {
         std::string input;
         std::string line;
         std::cout << ">>> ";

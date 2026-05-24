@@ -20,11 +20,10 @@ static void register_fn(const std::shared_ptr<context> &global_ctx, const std::s
 static void register_all(const std::shared_ptr<context> &global_ctx) {
     // print
     register_fn(global_ctx, "print", [](interpreter &visitor, arg &args) {
-        if (args.size() > 1)
-            for (auto &parm: args)
-                std::cout << parm->to_string();
-        else if (!args.empty())
-            std::cout << args[0]->to_string();
+        for (size_t i = 0; i < args.size(); ++i) {
+            std::cout << args[i]->to_string();
+            if (i != args.size() - 1) std::cout << " ";
+        }
 
         std::cout << std::endl;
         return visitor.get_runtime().null_obj();
@@ -46,7 +45,7 @@ static void register_all(const std::shared_ptr<context> &global_ctx) {
     register_fn(global_ctx, "type", [](interpreter &visitor, arg &args) {
         if (args.size() != 1)
             throw std::runtime_error{
-                "Function 'input' expects 1 arguments, but " + std::to_string(args.size()) + " were given."
+                "Function 'type' expects 1 arguments, but " + std::to_string(args.size()) + " were given."
             };
         return visitor.get_runtime().get_string(args[0]->type_name());
     });
@@ -58,16 +57,49 @@ static void register_all(const std::shared_ptr<context> &global_ctx) {
         return visitor.get_runtime().null_obj();
     });
     // time
-    register_fn(global_ctx, "time", [](interpreter &visitor, const std::vector<bs_obj_ptr> &params) {
-        if (!params.empty())
+    register_fn(global_ctx, "time", [](interpreter &visitor, const std::vector<bs_obj_ptr> &args) {
+        if (!args.empty())
             throw std::runtime_error(
-                "time() expects 0 arguments, but " + std::to_string(params.size()) + " were given.");
+                "time() expects 0 arguments, but " + std::to_string(args.size()) + " were given.");
 
         const auto now = std::chrono::steady_clock::now();
         const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch());
 
         const auto ms = static_cast<double>(duration.count());
         return visitor.get_runtime().get_number(ms);
+    });
+    // string (will be removed when string has a ctor)
+    register_fn(global_ctx, "string", [](interpreter &visitor, const std::vector<bs_obj_ptr> &args) {
+        if (args.size() != 1)
+            throw std::runtime_error{
+                "string() expects 1 argument, but " + std::to_string(args.size()) + " were given."
+            };
+
+        return visitor.get_runtime().get_string(args[0]->to_string());
+    });
+    // int
+    register_fn(global_ctx, "int", [](interpreter &visitor, const std::vector<bs_obj_ptr> &args) {
+        if (args.size() != 1)
+            throw std::runtime_error{
+                "int() expects 1 argument, but " + std::to_string(args.size()) + " were given."
+            };
+        if (args[0]->type_name() != "String" && args[0]->type_name() != "Number")
+            throw std::runtime_error{
+                "cannot cast " + args[0]->type_name() + " to an integer"
+            };
+        return visitor.get_runtime().get_number(std::stoi(args[0]->to_string()));
+    });
+    // number
+    register_fn(global_ctx, "number", [](interpreter &visitor, const std::vector<bs_obj_ptr> &args) {
+        if (args.size() != 1)
+            throw std::runtime_error{
+                "number() expects 1 argument, but " + std::to_string(args.size()) + " were given."
+            };
+        if (args[0]->type_name() != "String" && args[0]->type_name() != "Number")
+            throw std::runtime_error{
+                "cannot cast " + args[0]->type_name() + " to a number"
+            };
+        return visitor.get_runtime().get_number(std::stod(args[0]->to_string()));
     });
 }
 

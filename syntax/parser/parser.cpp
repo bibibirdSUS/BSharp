@@ -219,7 +219,10 @@ node_ptr parser::fn_stmt() {
     node_ptr body = nullptr;
     if (current().type == token_type::EQUALS) {
         advance();
-        body = expr();
+        const position expr_start = current().start;
+        node_ptr expression = expr();
+        const position expr_end = expression->where.end;
+        body = std::make_unique<return_node>(std::move(expression), span{expr_start, expr_end});
     } else if (current().type == token_type::DO) {
         advance();
         body = block();
@@ -280,18 +283,40 @@ node_ptr parser::expr() {
 }
 
 node_ptr parser::assignment() {
-    if (current().type == token_type::IDENTIFIER && match({
-                                                              token_type::EQUALS, token_type::PLUS_EQ,
-                                                              token_type::SUB_EQ, token_type::MUL_EQ,
-                                                              token_type::DIV_EQ, token_type::MOD_EQ, token_type::POW_EQ
-                                                          }, peek(1))) {
-        const token &var_name = advance();
-        token_type assign_type = advance().type;
+    node_ptr left = logic_or();
+    if (match({
+                  token_type::EQUALS, token_type::PLUS_EQ, token_type::SUB_EQ, token_type::MUL_EQ, token_type::DIV_EQ,
+                  token_type::MOD_EQ, token_type::POW_EQ
+              }, current())) {
+        const token op = advance();
         node_ptr value = expr();
-        return std::make_unique<var_assign_node>(var_name, assign_type, std::move(value));
-    }
 
-    return logic_or();
+        if (const auto var_node = dynamic_cast<const var_access_node *>(left.get()))
+            return std::make_unique<var_assign_node>(token{
+                                                         var_node->name, token_type::IDENTIFIER, var_node->where.start,
+                                                         var_node->where.end
+                                                     }, op.type, std::move(value));
+
+
+        if (const auto sub_node = dynamic_cast<subscript_node *>(left.get())) {
+            const position start_pos = sub_node->where.start;
+            const position end_pos = value->where.end;
+
+            const auto concrete_sub_node = std::unique_ptr<subscript_node>(
+                dynamic_cast<subscript_node *>(left.release()));
+
+            return std::make_unique<subscript_assign_node>(
+                std::move(concrete_sub_node->left),
+                std::move(concrete_sub_node->index),
+                op.type,
+                std::move(value),
+                span{start_pos, end_pos}
+            );
+        }
+
+        throw bs_invalid_syntax_exception{"Invalid assignment target", source_code_, op.start, op.end};
+    }
+    return left;
 }
 
 node_ptr parser::logic_or() {
@@ -309,7 +334,10 @@ node_ptr parser::logic_and() {
 node_ptr parser::comparison() {
     node_ptr left = sum();
 
-    if (!match({token_type::LESS, token_type::GREATER, token_type::LE, token_type::GE, token_type::EQ, token_type::NEQ},
+    if (!match({
+                   token_type::LESS, token_type::GREATER, token_type::LE, token_type::GE, token_type::EQ,
+                   token_type::NEQ
+               },
                current()))
         return left;
 
@@ -360,32 +388,49 @@ node_ptr parser::unary() {
 }
 
 node_ptr parser::postfix() {
-    node_ptr number = call();
-    while (current().type == token_type::FACTORIAL) {
-        const token &t = advance();
-        number = std::make_unique<factorial_node>(std::move(number), t);
-    }
-    return number;
-}
+    node_ptr expr_node = primary();
+    const position start_pos = expr_node->where.start;
+    position end_pos = expr_node->where.end;
 
-node_ptr parser::call() {
-    if (current().type != token_type::IDENTIFIER || peek(1).type != token_type::LPARN)
-        return primary();
-    const position start_pos = current().start;
-    const std::string name = advance().literal;
-    advance();
-    std::vector<node_ptr> args;
-    while (current().type != token_type::RPARN) {
-        args.push_back(expr());
-        if (current().type != token_type::COMMA) break;
-        advance();
+    for (;;) {
+        if (current().type == token_type::LPARN) {
+            advance();
+            std::vector<node_ptr> args;
+            if (current().type != token_type::RPARN)
+                for (;;) {
+                    args.push_back(expr());
+                    if (current().type != token_type::COMMA) break;
+                    advance();
+                    if (current().type == token_type::RPARN) break;
+                }
+
+            if (current().type != token_type::RPARN)
+                throw bs_invalid_syntax_exception{
+                    "Expected ')', but found '" + current().literal + "'", source_code_, current().start,
+                    current().end
+                };
+            end_pos = advance().end;
+
+            expr_node = std::make_unique<
+                call_node>(std::move(expr_node), std::move(args), span{start_pos, end_pos});
+        } else if (current().type == token_type::LBRACKET) {
+            advance();
+            node_ptr index = expr();
+            if (current().type != token_type::RBRACKET)
+                throw bs_invalid_syntax_exception{
+                    "Expected ']', but found '" + current().literal + "'", source_code_, current().start,
+                    current().end
+                };
+            end_pos = advance().end;
+
+            expr_node = std::make_unique<subscript_node>(std::move(expr_node), std::move(index),
+                                                         span{start_pos, end_pos});
+        } else if (current().type == token_type::FACTORIAL) {
+            const token &t = advance();
+            expr_node = std::make_unique<factorial_node>(std::move(expr_node), t);
+        } else break;
     }
-    if (current().type != token_type::RPARN)
-        throw bs_invalid_syntax_exception{
-            "Expected ')', but found '" + current().literal + "'", source_code_, current().start, current().end
-        };
-    const position end_pos = advance().end;
-    return std::make_unique<call_node>(name, std::move(args), span{start_pos, end_pos});
+    return expr_node;
 }
 
 node_ptr parser::primary() {
@@ -428,9 +473,32 @@ node_ptr parser::primary() {
         return std::make_unique<string_node>(t);
     }
 
+    if (current().type == token_type::LBRACKET)
+        return list_literal();
+
     throw bs_invalid_syntax_exception{
         "Expected '(', identifier, or literal, but found '" + current().literal + "'",
         source_code_, current().start,
         current().end
     };
+}
+
+node_ptr parser::list_literal() {
+    const position start_pos = advance().start;
+    std::vector<node_ptr> args;
+
+    if (current().type != token_type::RBRACKET)
+        for (;;) {
+            args.push_back(expr());
+            if (current().type != token_type::COMMA) break;
+            advance();
+            if (current().type == token_type::RBRACKET) break;
+        }
+
+    if (current().type != token_type::RBRACKET)
+        throw bs_invalid_syntax_exception{
+            "Expected ']', but found '" + current().literal + "'", source_code_, current().start, current().end
+        };
+    const position end_pos = advance().end;
+    return std::make_unique<list_literal_node>(std::move(args), span{start_pos, end_pos});
 }

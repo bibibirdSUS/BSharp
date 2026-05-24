@@ -90,7 +90,7 @@ node_ptr var_assign_node::copy() const {
 }
 
 bs_obj_ptr var_access_node::accept(interpreter &visitor, const context_ptr ctx) {
-    return interpreter::visit(*this, *ctx);
+    return visitor.visit(*this, ctx);
 }
 
 node_ptr var_access_node::copy() const {
@@ -132,7 +132,7 @@ node_ptr for_node::copy() const {
 }
 
 bs_obj_ptr fn_node::accept(interpreter &visitor, const context_ptr ctx) {
-    return interpreter::visit(*this, ctx);
+    return visitor.visit(*this, ctx);
 }
 
 node_ptr fn_node::copy() const {
@@ -144,7 +144,7 @@ bs_obj_ptr call_node::accept(interpreter &visitor, const context_ptr ctx) {
 }
 
 node_ptr call_node::copy() const {
-    return std::make_unique<call_node>(name, clone_nodes(args), span{where.start, where.end});
+    return std::make_unique<call_node>(callee->copy(), clone_nodes(args), span{where.start, where.end});
 }
 
 bs_obj_ptr string_node::accept(interpreter &visitor, context_ptr ctx) {
@@ -155,7 +155,7 @@ node_ptr string_node::copy() const {
     return std::make_unique<string_node>(token{str, token_type::STRING, where.start, where.end});
 }
 
-bs_obj_ptr return_node::accept(interpreter &visitor, context_ptr ctx) {
+bs_obj_ptr return_node::accept(interpreter &visitor, const context_ptr ctx) {
     return visitor.visit(*this, ctx);
 }
 
@@ -163,18 +163,43 @@ node_ptr return_node::copy() const {
     return std::make_unique<return_node>(expr ? expr->copy() : nullptr, span{where.start, where.end});
 }
 
-bs_obj_ptr break_node::accept(interpreter &visitor, context_ptr ctx) {
-    return interpreter::visit(*this, ctx);
+bs_obj_ptr break_node::accept(interpreter &visitor, const context_ptr ctx) {
+    return visitor.visit(*this);
 }
 
 node_ptr break_node::copy() const {
     return std::make_unique<break_node>(span{where.start, where.end});
 }
 
-bs_obj_ptr continue_node::accept(interpreter &visitor, context_ptr ctx) {
-    return interpreter::visit(*this, ctx);
+bs_obj_ptr continue_node::accept(interpreter &visitor, const context_ptr ctx) {
+    return visitor.visit(*this);
 }
 
 node_ptr continue_node::copy() const {
     return std::make_unique<continue_node>(span{where.start, where.end});
+}
+
+bs_obj_ptr list_literal_node::accept(interpreter &visitor, const context_ptr ctx) {
+    return visitor.visit(*this, ctx);
+}
+
+node_ptr list_literal_node::copy() const {
+    return std::make_unique<list_literal_node>(clone_nodes(args), span{where.start, where.end});
+}
+
+bs_obj_ptr subscript_node::accept(interpreter &visitor, const context_ptr ctx) {
+    return visitor.visit(*this, ctx);
+}
+
+node_ptr subscript_node::copy() const {
+    return std::make_unique<subscript_node>(left->copy(), index->copy(), span{where.start, where.end});
+}
+
+bs_obj_ptr subscript_assign_node::accept(interpreter &visitor, context_ptr ctx) {
+    return visitor.visit(*this, ctx);
+}
+
+node_ptr subscript_assign_node::copy() const {
+    return std::make_unique<subscript_assign_node>(left->copy(), index->copy(), op, value->copy(),
+                                                   span{where.start, where.end});
 }

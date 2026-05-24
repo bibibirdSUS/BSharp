@@ -23,17 +23,17 @@ public:
 
     [[nodiscard]] std::string type_name() const override;
 
-    [[nodiscard]] bs_obj_ptr add(const bs_obj &rhs) const override;
+    [[nodiscard]] bs_obj_ptr add(const bs_obj_ptr &rhs) const override;
 
-    [[nodiscard]] bs_obj_ptr sub(const bs_obj &rhs) const override;
+    [[nodiscard]] bs_obj_ptr sub(const bs_obj_ptr &rhs) const override;
 
-    [[nodiscard]] bs_obj_ptr mul(const bs_obj &rhs) const override;
+    [[nodiscard]] bs_obj_ptr mul(const bs_obj_ptr &rhs) const override;
 
-    [[nodiscard]] bs_obj_ptr div(const bs_obj &rhs) const override;
+    [[nodiscard]] bs_obj_ptr div(const bs_obj_ptr &rhs) const override;
 
-    [[nodiscard]] bs_obj_ptr pow(const bs_obj &rhs) const override;
+    [[nodiscard]] bs_obj_ptr pow(const bs_obj_ptr &rhs) const override;
 
-    [[nodiscard]] bs_obj_ptr mod(const bs_obj &rhs) const override;
+    [[nodiscard]] bs_obj_ptr mod(const bs_obj_ptr &rhs) const override;
 
     [[nodiscard]] bs_obj_ptr fact() const override;
 
@@ -41,17 +41,17 @@ public:
 
     [[nodiscard]] bs_obj_ptr pos() const override;
 
-    [[nodiscard]] bs_obj_ptr eq(const bs_obj &rhs) const override;
+    [[nodiscard]] bs_obj_ptr eq(const bs_obj_ptr &rhs) const override;
 
-    [[nodiscard]] bs_obj_ptr neq(const bs_obj &rhs) const override;
+    [[nodiscard]] bs_obj_ptr neq(const bs_obj_ptr &rhs) const override;
 
-    [[nodiscard]] bs_obj_ptr lt(const bs_obj &rhs) const override;
+    [[nodiscard]] bs_obj_ptr lt(const bs_obj_ptr &rhs) const override;
 
-    [[nodiscard]] bs_obj_ptr gt(const bs_obj &rhs) const override;
+    [[nodiscard]] bs_obj_ptr gt(const bs_obj_ptr &rhs) const override;
 
-    [[nodiscard]] bs_obj_ptr le(const bs_obj &rhs) const override;
+    [[nodiscard]] bs_obj_ptr le(const bs_obj_ptr &rhs) const override;
 
-    [[nodiscard]] bs_obj_ptr ge(const bs_obj &rhs) const override;
+    [[nodiscard]] bs_obj_ptr ge(const bs_obj_ptr &rhs) const override;
 
     static bool is_int(const double d) {
         return std::abs(std::floor(d) - d) < eps;

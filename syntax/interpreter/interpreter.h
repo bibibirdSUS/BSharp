@@ -33,35 +33,41 @@ public:
 
     bs_obj_ptr visit(const string_node &n);
 
-    bs_obj_ptr visit(const statements_node &n, const context_ptr& ctx);
+    bs_obj_ptr visit(const statements_node &n, const context_ptr &ctx);
 
-    bs_obj_ptr visit(const comparison_node &n, const context_ptr& ctx);
+    bs_obj_ptr visit(const comparison_node &n, const context_ptr &ctx);
 
-    bs_obj_ptr visit(const bin_op_node &n, const context_ptr& ctx);
+    bs_obj_ptr visit(const bin_op_node &n, const context_ptr &ctx);
 
-    bs_obj_ptr visit(const unary_op_node &n, const context_ptr& ctx);
+    bs_obj_ptr visit(const unary_op_node &n, const context_ptr &ctx);
 
-    bs_obj_ptr visit(const factorial_node &n, const context_ptr& ctx);
+    bs_obj_ptr visit(const factorial_node &n, const context_ptr &ctx);
 
-    bs_obj_ptr visit(const var_assign_node &n, const context_ptr& ctx);
+    bs_obj_ptr visit(const var_assign_node &n, const context_ptr &ctx);
 
-    static bs_obj_ptr visit(const var_access_node &n, const context &ctx);
+    bs_obj_ptr visit(const var_access_node &n, const context_ptr &ctx);
 
-    bs_obj_ptr visit(const if_node &n, const context_ptr& ctx);
+    bs_obj_ptr visit(const if_node &n, const context_ptr &ctx);
 
-    bs_obj_ptr visit(const while_node &n, const context_ptr& ctx);
+    bs_obj_ptr visit(const while_node &n, const context_ptr &ctx);
 
-    bs_obj_ptr visit(const for_node &n, const context_ptr& ctx);
+    bs_obj_ptr visit(const for_node &n, const context_ptr &ctx);
 
-    bs_obj_ptr visit(const call_node &n, const context_ptr& ctx);
+    bs_obj_ptr visit(const call_node &n, const context_ptr &ctx);
 
-    bs_obj_ptr visit(const return_node &n, const context_ptr& ctx);
+    bs_obj_ptr visit(const return_node &n, const context_ptr &ctx);
 
-    static bs_obj_ptr visit(const break_node &n, const context_ptr& ctx);
+    static bs_obj_ptr visit(const break_node &_);
 
-    static bs_obj_ptr visit(const continue_node &n, const context_ptr& ctx);
+    static bs_obj_ptr visit(const continue_node &_);
 
     static bs_obj_ptr visit(const fn_node &n, const context_ptr &ctx);
+
+    bs_obj_ptr visit(const list_literal_node &n, const context_ptr &ctx);
+
+    bs_obj_ptr visit(const subscript_node &n, const context_ptr &ctx);
+
+    bs_obj_ptr visit(const subscript_assign_node &n, const context_ptr &ctx);
 
     bs_runtime &get_runtime() { return rt_; }
 

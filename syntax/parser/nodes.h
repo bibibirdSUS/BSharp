@@ -236,12 +236,12 @@ struct fn_node final : node {
 };
 
 struct call_node final : node {
-    std::string name;
+    node_ptr callee;
     std::vector<node_ptr> args;
 
-    call_node(std::string name, std::vector<node_ptr> args, span where) : node(std::move(where)),
-                                                                          name(std::move(name)),
-                                                                          args(std::move(args)) {
+    call_node(node_ptr callee, std::vector<node_ptr> args, span where) : node(std::move(where)),
+                                                                         callee(std::move(callee)),
+                                                                         args(std::move(args)) {
     }
 
     bs_obj_ptr accept(interpreter &visitor, context_ptr ctx) override;
@@ -282,6 +282,46 @@ struct break_node final : node {
 
 struct continue_node final : node {
     explicit continue_node(span where) : node(std::move(where)) {
+    }
+
+    bs_obj_ptr accept(interpreter &visitor, context_ptr ctx) override;
+
+    [[nodiscard]] node_ptr copy() const override;
+};
+
+struct list_literal_node final : node {
+    std::vector<node_ptr> args;
+
+    list_literal_node(std::vector<node_ptr> args, span where) : node(std::move(where)), args(std::move(args)) {
+    }
+
+    bs_obj_ptr accept(interpreter &visitor, context_ptr ctx) override;
+
+    [[nodiscard]] node_ptr copy() const override;
+};
+
+struct subscript_node final : node {
+    node_ptr left;
+    node_ptr index;
+
+    subscript_node(node_ptr left, node_ptr index, span where) : node(std::move(where)), left(std::move(left)),
+                                                                index(std::move(index)) {
+    }
+
+    bs_obj_ptr accept(interpreter &visitor, context_ptr ctx) override;
+
+    [[nodiscard]] node_ptr copy() const override;
+};
+
+struct subscript_assign_node final : node {
+    node_ptr left;
+    node_ptr index;
+    node_ptr value;
+    token_type op;
+
+    subscript_assign_node(node_ptr left, node_ptr index, const token_type op, node_ptr value,
+                          span where) : node(std::move(where)), left(std::move(left)), index(std::move(index)),
+                                        value(std::move(value)), op(op) {
     }
 
     bs_obj_ptr accept(interpreter &visitor, context_ptr ctx) override;

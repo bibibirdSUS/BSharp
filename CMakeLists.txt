@@ -41,4 +41,6 @@ add_executable(BSharp main.cpp
         syntax/bs_objs/builtin/bs_builtin_function.h
         syntax/bs_objs/builtin/builtins.h
         syntax/interpreter/signals.h
+        syntax/bs_objs/bs_list/bs_list.cpp
+        syntax/bs_objs/bs_list/bs_list.h
 )

@@ -9,8 +9,8 @@
 #include "../../utils.h"
 #include "../boolean/bs_boolean.h"
 
-const bs_number *as_number(const bs_obj &obj) {
-    return dynamic_cast<const bs_number *>(&obj);
+const bs_number *as_number(const bs_obj_ptr &obj) {
+    return dynamic_cast<const bs_number *>(obj.get());
 }
 
 bs_number::bs_number(const double value) : value_(value) {
@@ -30,32 +30,32 @@ std::string bs_number::type_name() const {
     return "Number";
 }
 
-bs_obj::bs_obj_ptr bs_number::add(const bs_obj &rhs) const {
+bs_obj::bs_obj_ptr bs_number::add(const bs_obj_ptr &rhs) const {
     const bs_number *rhs_casted = as_number(rhs);
     if (!rhs_casted) return bs_obj::add(rhs);
     return std::make_shared<bs_number>(value_ + rhs_casted->value_);
 }
 
-bs_obj::bs_obj_ptr bs_number::sub(const bs_obj &rhs) const {
+bs_obj::bs_obj_ptr bs_number::sub(const bs_obj_ptr &rhs) const {
     const bs_number *rhs_casted = as_number(rhs);
     if (!rhs_casted) return bs_obj::sub(rhs);
     return std::make_shared<bs_number>(value_ - rhs_casted->value_);
 }
 
-bs_obj::bs_obj_ptr bs_number::mul(const bs_obj &rhs) const {
+bs_obj::bs_obj_ptr bs_number::mul(const bs_obj_ptr &rhs) const {
     const bs_number *rhs_casted = as_number(rhs);
     if (!rhs_casted) return bs_obj::mul(rhs);
     return std::make_shared<bs_number>(value_ * rhs_casted->value_);
 }
 
-bs_obj::bs_obj_ptr bs_number::div(const bs_obj &rhs) const {
+bs_obj::bs_obj_ptr bs_number::div(const bs_obj_ptr &rhs) const {
     const bs_number *rhs_casted = as_number(rhs);
     if (!rhs_casted) return bs_obj::div(rhs);
     if (rhs_casted->value_ == 0) throw std::runtime_error{"Division by zero"};
     return std::make_shared<bs_number>(value_ / rhs_casted->value_);
 }
 
-bs_obj::bs_obj_ptr bs_number::pow(const bs_obj &rhs) const {
+bs_obj::bs_obj_ptr bs_number::pow(const bs_obj_ptr &rhs) const {
     const bs_number *rhs_casted = as_number(rhs);
     if (!rhs_casted) return bs_obj::pow(rhs);
     const double r = std::pow(value_, rhs_casted->value_);
@@ -66,7 +66,7 @@ bs_obj::bs_obj_ptr bs_number::pow(const bs_obj &rhs) const {
     return std::make_shared<bs_number>(r);
 }
 
-bs_obj::bs_obj_ptr bs_number::mod(const bs_obj &rhs) const {
+bs_obj::bs_obj_ptr bs_number::mod(const bs_obj_ptr &rhs) const {
     const bs_number *rhs_casted = as_number(rhs);
     if (!rhs_casted) return bs_obj::mod(rhs);
     if (rhs_casted->value_ == 0) throw std::runtime_error{"Division by zero"};
@@ -95,37 +95,37 @@ bs_obj::bs_obj_ptr bs_number::pos() const {
     return std::make_shared<bs_number>(value_);
 }
 
-bs_obj::bs_obj_ptr bs_number::eq(const bs_obj &rhs) const {
+bs_obj::bs_obj_ptr bs_number::eq(const bs_obj_ptr &rhs) const {
     const bs_number *rhs_casted = as_number(rhs);
     if (!rhs_casted) return std::make_shared<bs_boolean>(false);
     return std::make_shared<bs_boolean>(std::abs(value_ - rhs_casted->value_) < eps);
 }
 
-bs_obj::bs_obj_ptr bs_number::neq(const bs_obj &rhs) const {
+bs_obj::bs_obj_ptr bs_number::neq(const bs_obj_ptr &rhs) const {
     const bs_number *rhs_casted = as_number(rhs);
     if (!rhs_casted) return std::make_shared<bs_boolean>(true);
     return std::make_shared<bs_boolean>(std::abs(value_ - rhs_casted->value_) >= eps);
 }
 
-bs_obj::bs_obj_ptr bs_number::lt(const bs_obj &rhs) const {
+bs_obj::bs_obj_ptr bs_number::lt(const bs_obj_ptr &rhs) const {
     const bs_number *rhs_casted = as_number(rhs);
     if (!rhs_casted) return bs_obj::lt(rhs);
     return std::make_shared<bs_boolean>(value_ < rhs_casted->value_);
 }
 
-bs_obj::bs_obj_ptr bs_number::gt(const bs_obj &rhs) const {
+bs_obj::bs_obj_ptr bs_number::gt(const bs_obj_ptr &rhs) const {
     const bs_number *rhs_casted = as_number(rhs);
     if (!rhs_casted) return bs_obj::gt(rhs);
     return std::make_shared<bs_boolean>(value_ > rhs_casted->value_);
 }
 
-bs_obj::bs_obj_ptr bs_number::le(const bs_obj &rhs) const {
+bs_obj::bs_obj_ptr bs_number::le(const bs_obj_ptr &rhs) const {
     const bs_number *rhs_casted = as_number(rhs);
     if (!rhs_casted) return bs_obj::le(rhs);
     return std::make_shared<bs_boolean>(value_ <= rhs_casted->value_);
 }
 
-bs_obj::bs_obj_ptr bs_number::ge(const bs_obj &rhs) const {
+bs_obj::bs_obj_ptr bs_number::ge(const bs_obj_ptr &rhs) const {
     const bs_number *rhs_casted = as_number(rhs);
     if (!rhs_casted) return bs_obj::ge(rhs);
     return std::make_shared<bs_boolean>(value_ >= rhs_casted->value_);

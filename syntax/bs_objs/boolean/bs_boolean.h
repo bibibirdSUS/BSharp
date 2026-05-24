@@ -19,12 +19,15 @@ public:
 
     [[nodiscard]] std::string type_name() const override;
 
-    [[nodiscard]] bs_obj_ptr eq(const bs_obj &rhs) const override;
+    [[nodiscard]] bs_obj_ptr eq(const bs_obj_ptr &rhs) const override;
 
 private:
     const bool value_;
 };
 
-const bs_boolean *as_boolean(const bs_obj &obj);
+typedef std::shared_ptr<bs_obj> bs_obj_ptr;
+
+
+const bs_boolean *as_boolean(const bs_obj_ptr &obj);
 
 #endif //BSHARP_BS_BOOLEAN_H

@@ -79,9 +79,9 @@ private:
 
     node_ptr postfix();
 
-    node_ptr call();
-
     node_ptr primary();
+
+    node_ptr list_literal();
 
     node_ptr parse_left_assoc(parse_fn next, std::initializer_list<token_type> ops);
 };

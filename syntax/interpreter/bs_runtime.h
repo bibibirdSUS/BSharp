@@ -7,6 +7,7 @@
 #include "context.h"
 #include "../bs_objs/number/bs_number.h"
 #include "../bs_objs/string/bs_string.h"
+#include "../parser/nodes.h"
 
 
 class bs_runtime {
@@ -24,6 +25,12 @@ public:
     bs_obj_ptr get_string(const std::string &value);
 
     bs_obj_ptr get_number(double value) const;
+
+    static bs_obj_ptr get_function(const std::string &name, const std::vector<std::string> &params,
+                                   const node_ptr &body,
+                                   const context_ptr &closure);
+
+    static bs_obj_ptr get_list(std::vector<bs_obj_ptr> elements);
 
 private:
     const bs_obj_ptr bs_true;

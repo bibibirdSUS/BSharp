@@ -11,7 +11,7 @@
 
 #include "../bs_objs/exception/bs_invalid_syntax_exception.h"
 
-std::string_view operators = "+-*/%^!()=<>:~,";
+std::string_view operators = "+-*/%^!()=<>:~,[]";
 
 lexer::lexer(std::string input, std::string &&file_name) : input_(std::move(input)), file_name_(std::move(file_name)),
                                                            index_(0), position_(file_name_, 0, 0),
@@ -46,6 +46,8 @@ token_type get_operator_type(const std::string &s) {
     if (s == "/=") return token_type::DIV_EQ;
     if (s == "%=") return token_type::MOD_EQ;
     if (s == "^=") return token_type::POW_EQ;
+    if (s == "[") return token_type::LBRACKET;
+    if (s == "]") return token_type::RBRACKET;
 
     return token_type::NONE;
 }

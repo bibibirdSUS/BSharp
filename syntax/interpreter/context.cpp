@@ -5,9 +5,10 @@
 #include "context.h"
 #include <stdexcept>
 
-context::context(context_ptr parent) : parent_(std::move(parent)) {}
+context::context(context_ptr parent) : parent_(std::move(parent)) {
+}
 
-void context::set(const std::string& name, bs_obj::bs_obj_ptr value) {
+void context::set(const std::string &name, bs_obj::bs_obj_ptr value) {
     if (symbols_.contains(name)) {
         symbols_[name] = std::move(value);
         return;
@@ -19,7 +20,7 @@ void context::set(const std::string& name, bs_obj::bs_obj_ptr value) {
     symbols_[name] = std::move(value);
 }
 
-void context::define(const std::string& name, bs_obj::bs_obj_ptr value) {
+void context::define(const std::string &name, bs_obj::bs_obj_ptr value) {
     symbols_[name] = std::move(value);
 }
 
@@ -31,7 +32,7 @@ bs_obj_ptr context::get(const std::string &name) const {
     throw std::runtime_error("Undefined variable: '" + name + "'");
 }
 
-bool context::exists(const std::string& name) const {
+bool context::exists(const std::string &name) const {
     if (symbols_.contains(name)) return true;
     if (parent_) return parent_->exists(name);
     return false;

@@ -73,17 +73,17 @@ bs_obj_ptr interpreter::visit(const comparison_node &n, const context_ptr &ctx) 
         bs_obj_ptr result;
 
         switch (n.operators[i]) {
-            case token_type::EQ: result = left->eq(*right);
+            case token_type::EQ: result = left->eq(right);
                 break;
-            case token_type::NEQ: result = left->neq(*right);
+            case token_type::NEQ: result = left->neq(right);
                 break;
-            case token_type::LESS: result = left->lt(*right);
+            case token_type::LESS: result = left->lt(right);
                 break;
-            case token_type::GREATER: result = left->gt(*right);
+            case token_type::GREATER: result = left->gt(right);
                 break;
-            case token_type::LE: result = left->le(*right);
+            case token_type::LE: result = left->le(right);
                 break;
-            case token_type::GE: result = left->ge(*right);
+            case token_type::GE: result = left->ge(right);
                 break;
             default:
                 throw std::runtime_error{"Internal error: Unknown comparison operator"};
@@ -116,17 +116,17 @@ bs_obj_ptr interpreter::visit(const bin_op_node &n, const context_ptr &ctx) {
 
     switch (n.op) {
         case token_type::PLUS:
-            return left->add(*right);
+            return left->add(right);
         case token_type::SUBTRACT:
-            return left->sub(*right);
+            return left->sub(right);
         case token_type::MULTIPLY:
-            return left->mul(*right);
+            return left->mul(right);
         case token_type::DIVISION:
-            return left->div(*right);
+            return left->div(right);
         case token_type::MODULO:
-            return left->mod(*right);
+            return left->mod(right);
         case token_type::POWER:
-            return left->pow(*right);
+            return left->pow(right);
         case token_type::XOR:
             return left->to_boolean() ^ right->to_boolean() ? rt_.true_obj() : rt_.false_obj();
 
@@ -166,17 +166,17 @@ bs_obj_ptr interpreter::visit(const var_assign_node &n, const context_ptr &ctx) 
     bs_obj_ptr result;
 
     switch (n.op) {
-        case token_type::PLUS_EQ: result = current_val->add(*value);
+        case token_type::PLUS_EQ: result = current_val->add(value);
             break;
-        case token_type::SUB_EQ: result = current_val->sub(*value);
+        case token_type::SUB_EQ: result = current_val->sub(value);
             break;
-        case token_type::MUL_EQ: result = current_val->mul(*value);
+        case token_type::MUL_EQ: result = current_val->mul(value);
             break;
-        case token_type::DIV_EQ: result = current_val->div(*value);
+        case token_type::DIV_EQ: result = current_val->div(value);
             break;
-        case token_type::MOD_EQ: result = current_val->mod(*value);
+        case token_type::MOD_EQ: result = current_val->mod(value);
             break;
-        case token_type::POW_EQ: result = current_val->pow(*value);
+        case token_type::POW_EQ: result = current_val->pow(value);
             break;
         default:
             throw std::runtime_error{"Internal error: Unknown assignment operator"};
@@ -186,8 +186,8 @@ bs_obj_ptr interpreter::visit(const var_assign_node &n, const context_ptr &ctx) 
     return result;
 }
 
-bs_obj_ptr interpreter::visit(const var_access_node &n, const context &ctx) {
-    return ctx.get(n.name);
+bs_obj_ptr interpreter::visit(const var_access_node &n, const context_ptr &ctx) {
+    return ctx->get(n.name);
 }
 
 bs_obj_ptr interpreter::visit(const statements_node &n, const context_ptr &ctx) {
@@ -212,9 +212,7 @@ bs_obj_ptr interpreter::visit(const if_node &n, const context_ptr &ctx) {
 }
 
 bs_obj_ptr interpreter::visit(const while_node &n, const context_ptr &ctx) {
-    bs_obj_ptr result = rt_.null_obj();
-
-    while (true) {
+    for (;;) {
         try {
             if (const bs_obj_ptr condition = eval(n.condition.get(), ctx);
                 n.is_until
@@ -223,13 +221,13 @@ bs_obj_ptr interpreter::visit(const while_node &n, const context_ptr &ctx) {
                 break;
 
             auto body_context = std::make_shared<context>(ctx);
-            result = eval(n.body.get(), body_context);
+            eval(n.body.get(), body_context);
         } catch (const break_signal &) {
             break;
         } catch (const continue_signal &) {
         }
     }
-    return result;
+    return rt_.null_obj();
 }
 
 bs_obj_ptr interpreter::visit(const for_node &n, const context_ptr &ctx) {
@@ -238,13 +236,12 @@ bs_obj_ptr interpreter::visit(const for_node &n, const context_ptr &ctx) {
 
     loop_context->define(n.name, rt_.null_obj());
 
-    bs_obj_ptr result = rt_.null_obj();
     const bs_obj_ptr start = eval(n.start.get(), loop_context);
     const bs_obj_ptr end = eval(n.end.get(), loop_context);
 
-    const bool default_increase = start->lt(*end)->to_boolean();
+    const bool default_increase = start->lt(end)->to_boolean();
 
-    while (true) {
+    for (;;) {
         const bs_obj_ptr current_val = loop_context->get(n.name);
 
         bs_obj_ptr step;
@@ -252,20 +249,20 @@ bs_obj_ptr interpreter::visit(const for_node &n, const context_ptr &ctx) {
 
         if (n.step) {
             step = eval(n.step.get(), loop_context);
-            if (step->eq(*rt_.get_number(0))->to_boolean())
+            if (step->eq(rt_.get_number(0))->to_boolean())
                 throw std::runtime_error("For loop step cannot be zero");
-            increase = step->gt(*rt_.get_number(0))->to_boolean();
+            increase = step->gt(rt_.get_number(0))->to_boolean();
         } else {
             step = rt_.get_number(default_increase ? 1.0 : -1.0);
             increase = default_increase;
         }
 
-        if (increase && current_val->ge(*end)->to_boolean()) break;
-        if (!increase && current_val->le(*end)->to_boolean()) break;
+        if (increase && current_val->ge(end)->to_boolean()) break;
+        if (!increase && current_val->le(end)->to_boolean()) break;
 
         try {
             auto iteration_context = std::make_shared<context>(loop_context);
-            result = eval(n.body.get(), iteration_context);
+            eval(n.body.get(), iteration_context);
         } catch (const break_signal &) {
             break;
         } catch (const continue_signal &) {
@@ -273,24 +270,34 @@ bs_obj_ptr interpreter::visit(const for_node &n, const context_ptr &ctx) {
         }
 
         const bs_obj_ptr val_to_increment = loop_context->get(n.name);
-        loop_context->set(n.name, val_to_increment->add(*step));
+        loop_context->set(n.name, val_to_increment->add(step));
     }
-    return result;
+    return rt_.null_obj();
 }
 
 bs_obj_ptr interpreter::visit(const fn_node &n, const context_ptr &ctx) {
-    bs_obj_ptr fn = std::make_shared<bs_function>(n.name, n.params, n.body->copy(), ctx);
+    bs_obj_ptr fn = bs_runtime::get_function(n.name, n.params, n.body->copy(), ctx);
     ctx->define(n.name, fn);
     return fn;
 }
 
 bs_obj_ptr interpreter::visit(const call_node &n, const context_ptr &ctx) {
-    const bs_obj_ptr func_obj = ctx->get(n.name);
+    const bs_obj_ptr func_obj = eval(n.callee.get(), ctx);
 
     std::vector<bs_obj_ptr> args;
     for (const auto &arg_node: n.args)
         args.push_back(eval(arg_node.get(), ctx));
-    call_stack_guard guard{call_stack_, n.name, n.where.start, n.where.end};
+
+    std::string call_name = "<anonymous>";
+    if (const auto var_node = dynamic_cast<const var_access_node *>(n.callee.get()))
+        call_name = var_node->name;
+    else if (dynamic_cast<const call_node *>(n.callee.get()))
+        call_name = "<call result>";
+    else if (dynamic_cast<const subscript_node *>(n.callee.get()))
+        call_name = "<subscript result>";
+
+
+    call_stack_guard guard{call_stack_, std::move(call_name), n.where.start, n.where.end};
     if (call_stack_.size() > 1000) throw std::runtime_error{"Stack Overflow: Maximum recursion depth exceeded"};
     return func_obj->call(*this, args);
 }
@@ -302,10 +309,60 @@ bs_obj_ptr interpreter::visit(const return_node &n, const context_ptr &ctx) {
     throw return_signal{result};
 }
 
-bs_obj_ptr interpreter::visit(const break_node &n, const context_ptr &ctx) {
+bs_obj_ptr interpreter::visit(const break_node &_) {
     throw break_signal{};
 }
 
-bs_obj_ptr interpreter::visit(const continue_node &n, const context_ptr &ctx) {
+bs_obj_ptr interpreter::visit(const continue_node &_) {
     throw continue_signal{};
+}
+
+bs_obj_ptr interpreter::visit(const list_literal_node &n, const context_ptr &ctx) {
+    std::vector<bs_obj_ptr> evaluated_args;
+    evaluated_args.reserve(n.args.size());
+
+    for (const auto &e: n.args) {
+        bs_obj_ptr evaluated = eval(e.get(), ctx);
+        evaluated_args.push_back(evaluated);
+    }
+    return bs_runtime::get_list(std::move(evaluated_args));
+}
+
+bs_obj_ptr interpreter::visit(const subscript_node &n, const context_ptr &ctx) {
+    const bs_obj_ptr left = eval(n.left.get(), ctx);
+    const bs_obj_ptr index = eval(n.index.get(), ctx);
+    return left->subscript(index);
+}
+
+bs_obj_ptr interpreter::visit(const subscript_assign_node &n, const context_ptr &ctx) {
+    const bs_obj_ptr left = eval(n.left.get(), ctx);
+    const bs_obj_ptr index = eval(n.index.get(), ctx);
+    const bs_obj_ptr value = eval(n.value.get(), ctx);
+
+    switch (n.op) {
+        case token_type::EQUALS:
+            left->set_subscript(index, value);
+            break;
+        case token_type::PLUS_EQ:
+            left->set_subscript(index, left->subscript(index)->add(value));
+            break;
+        case token_type::SUB_EQ:
+            left->set_subscript(index, left->subscript(index)->sub(value));
+            break;
+        case token_type::MUL_EQ:
+            left->set_subscript(index, left->subscript(index)->mul(value));
+            break;
+        case token_type::DIV_EQ:
+            left->set_subscript(index, left->subscript(index)->div(value));
+            break;
+        case token_type::POW_EQ:
+            left->set_subscript(index, left->subscript(index)->pow(value));
+            break;
+        case token_type::MOD_EQ:
+            left->set_subscript(index, left->subscript(index)->mod(value));
+            break;
+        default:
+            throw std::runtime_error{"Internal error: Unknown subscript assignment operator"};
+    }
+    return value;
 }
