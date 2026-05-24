@@ -83,6 +83,8 @@ private:
 
     node_ptr list_literal();
 
+    node_ptr ternary();
+
     node_ptr parse_left_assoc(parse_fn next, std::initializer_list<token_type> ops);
 };
 

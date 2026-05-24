@@ -101,6 +101,11 @@ std::vector<token> lexer::tokenize() {
                     indent_stack_.pop();
                     tokens.emplace_back("DEDENT", token_type::DEDENT, position_, position_);
                 }
+                if (indent_stack_.empty() || indent != indent_stack_.top())
+                    throw bs_invalid_syntax_exception{
+                        "Invalid indentation: dedent does not match any outer indentation level",
+                        input_, position_, position_
+                    };
             }
 
             is_line_start_ = false;

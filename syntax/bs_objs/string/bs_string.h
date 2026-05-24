@@ -19,13 +19,13 @@ public:
 
     [[nodiscard]] bool to_boolean() const override;
 
-    [[nodiscard]] bs_obj_ptr add(const bs_obj_ptr &rhs) const override;
+    [[nodiscard]] bs_obj_ptr add(interpreter &visitor, const bs_obj_ptr &rhs) const override;
 
-    [[nodiscard]] bs_obj_ptr mul(const bs_obj_ptr &rhs) const override;
+    [[nodiscard]] bs_obj_ptr mul(interpreter &visitor, const bs_obj_ptr &rhs) const override;
 
-    [[nodiscard]] bs_obj_ptr eq(const bs_obj_ptr &rhs) const override;
+    [[nodiscard]] bs_obj_ptr eq(interpreter &visitor, const bs_obj_ptr &rhs) const override;
 
-    [[nodiscard]] bs_obj_ptr subscript(const bs_obj_ptr &index) const override;
+    [[nodiscard]] bs_obj_ptr subscript(interpreter &visitor, const bs_obj_ptr &index) const override;
 
 private:
     std::string str_;

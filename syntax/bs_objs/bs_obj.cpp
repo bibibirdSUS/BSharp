@@ -2,13 +2,12 @@
 // Created by bibib on 2026/4/5.
 //
 #include "bs_obj.h"
-#include "boolean/bs_boolean.h"
+#include "../interpreter/interpreter.h"
 
-
-bs_obj::bs_obj_ptr bs_obj::eq(const bs_obj_ptr &rhs) const {
-    return std::make_shared<bs_boolean>(shared_from_this() == rhs);
+bs_obj::bs_obj_ptr bs_obj::eq(interpreter &visitor, const bs_obj_ptr &rhs) const {
+    return shared_from_this() == rhs ? visitor.get_runtime().true_obj() : visitor.get_runtime().false_obj();
 }
 
-bs_obj::bs_obj_ptr bs_obj::neq(const bs_obj_ptr &rhs) const {
-    return std::make_shared<bs_boolean>(!eq(rhs)->to_boolean());
+bs_obj::bs_obj_ptr bs_obj::neq(interpreter &visitor, const bs_obj_ptr &rhs) const {
+    return !eq(visitor, rhs)->to_boolean() ? visitor.get_runtime().true_obj() : visitor.get_runtime().false_obj();
 }

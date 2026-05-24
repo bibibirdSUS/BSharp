@@ -34,59 +34,61 @@ public:
         throw std::runtime_error{"Class '" + type_name() + "' is not callable"};
     }
 
-    [[nodiscard]] virtual bs_obj_ptr neg() const {
-        throw std::runtime_error{"Class '" + type_name() + "' doesn't support '-'"};
+    // --- 數學與二元運算子 ---
+    [[nodiscard]] virtual bs_obj_ptr neg(interpreter &visitor) const {
+        throw std::runtime_error{"Class '" + type_name() + "' doesn't support unary '-'"};
     }
 
-    [[nodiscard]] virtual bs_obj_ptr pos() const {
-        throw std::runtime_error{"Class '" + type_name() + "' doesn't support '+'"};
+    [[nodiscard]] virtual bs_obj_ptr pos(interpreter &visitor) const {
+        throw std::runtime_error{"Class '" + type_name() + "' doesn't support unary '+'"};
     }
 
-    [[nodiscard]] virtual bs_obj_ptr add(const bs_obj_ptr &rhs) const {
-        throw std::runtime_error{"Class '" + type_name() + "' doesn't support '+' with " + rhs->type_name()};
-    }
-
-    [[nodiscard]] virtual bs_obj_ptr sub(const bs_obj_ptr &rhs) const {
-        throw std::runtime_error{"Class '" + type_name() + "' doesn't support '-' with " + rhs->type_name()};
-    }
-
-    [[nodiscard]] virtual bs_obj_ptr mul(const bs_obj_ptr &rhs) const {
-        throw std::runtime_error{"Class '" + type_name() + "' doesn't support '*' with " + rhs->type_name()};
-    }
-
-    [[nodiscard]] virtual bs_obj_ptr div(const bs_obj_ptr &rhs) const {
-        throw std::runtime_error{"Class '" + type_name() + "' doesn't support '/' with " + rhs->type_name()};
-    }
-
-    [[nodiscard]] virtual bs_obj_ptr pow(const bs_obj_ptr &rhs) const {
-        throw std::runtime_error{"Class '" + type_name() + "' doesn't support '^' with " + rhs->type_name()};
-    }
-
-    [[nodiscard]] virtual bs_obj_ptr mod(const bs_obj_ptr &rhs) const {
-        throw std::runtime_error{"Class '" + type_name() + "' doesn't support '%' with " + rhs->type_name()};
-    }
-
-    [[nodiscard]] virtual bs_obj_ptr fact() const {
+    [[nodiscard]] virtual bs_obj_ptr fact(interpreter &visitor) const {
         throw std::runtime_error{"Class '" + type_name() + "' doesn't support '!'"};
     }
 
-    [[nodiscard]] virtual bs_obj_ptr eq(const bs_obj_ptr &rhs) const;
+    [[nodiscard]] virtual bs_obj_ptr add(interpreter &visitor, const bs_obj_ptr &rhs) const {
+        throw std::runtime_error{"Class '" + type_name() + "' doesn't support '+' with " + rhs->type_name()};
+    }
 
-    [[nodiscard]] virtual bs_obj_ptr neq(const bs_obj_ptr &rhs) const;
+    [[nodiscard]] virtual bs_obj_ptr sub(interpreter &visitor, const bs_obj_ptr &rhs) const {
+        throw std::runtime_error{"Class '" + type_name() + "' doesn't support '-' with " + rhs->type_name()};
+    }
 
-    [[nodiscard]] virtual bs_obj_ptr lt(const bs_obj_ptr &rhs) const {
+    [[nodiscard]] virtual bs_obj_ptr mul(interpreter &visitor, const bs_obj_ptr &rhs) const {
+        throw std::runtime_error{"Class '" + type_name() + "' doesn't support '*' with " + rhs->type_name()};
+    }
+
+    [[nodiscard]] virtual bs_obj_ptr div(interpreter &visitor, const bs_obj_ptr &rhs) const {
+        throw std::runtime_error{"Class '" + type_name() + "' doesn't support '/' with " + rhs->type_name()};
+    }
+
+    [[nodiscard]] virtual bs_obj_ptr pow(interpreter &visitor, const bs_obj_ptr &rhs) const {
+        throw std::runtime_error{"Class '" + type_name() + "' doesn't support '^' with " + rhs->type_name()};
+    }
+
+    [[nodiscard]] virtual bs_obj_ptr mod(interpreter &visitor, const bs_obj_ptr &rhs) const {
+        throw std::runtime_error{"Class '" + type_name() + "' doesn't support '%' with " + rhs->type_name()};
+    }
+
+    // --- 比較運算子 ---
+    [[nodiscard]] virtual bs_obj_ptr eq(interpreter &visitor, const bs_obj_ptr &rhs) const;
+
+    [[nodiscard]] virtual bs_obj_ptr neq(interpreter &visitor, const bs_obj_ptr &rhs) const;
+
+    [[nodiscard]] virtual bs_obj_ptr lt(interpreter &visitor, const bs_obj_ptr &rhs) const {
         throw std::runtime_error{"Class '" + type_name() + "' doesn't support '<' with " + rhs->type_name()};
     }
 
-    [[nodiscard]] virtual bs_obj_ptr gt(const bs_obj_ptr &rhs) const {
+    [[nodiscard]] virtual bs_obj_ptr gt(interpreter &visitor, const bs_obj_ptr &rhs) const {
         throw std::runtime_error{"Class '" + type_name() + "' doesn't support '>' with " + rhs->type_name()};
     }
 
-    [[nodiscard]] virtual bs_obj_ptr le(const bs_obj_ptr &rhs) const {
+    [[nodiscard]] virtual bs_obj_ptr le(interpreter &visitor, const bs_obj_ptr &rhs) const {
         throw std::runtime_error{"Class '" + type_name() + "' doesn't support '<=' with " + rhs->type_name()};
     }
 
-    [[nodiscard]] virtual bs_obj_ptr ge(const bs_obj_ptr &rhs) const {
+    [[nodiscard]] virtual bs_obj_ptr ge(interpreter &visitor, const bs_obj_ptr &rhs) const {
         throw std::runtime_error{"Class '" + type_name() + "' doesn't support '>=' with " + rhs->type_name()};
     }
 
@@ -94,11 +96,11 @@ public:
         throw std::runtime_error{"Class '" + type_name() + "' is not callable"};
     }
 
-    [[nodiscard]] virtual bs_obj_ptr subscript(const bs_obj_ptr &index) const {
+    [[nodiscard]] virtual bs_obj_ptr subscript(interpreter &visitor, const bs_obj_ptr &index) const {
         throw std::runtime_error{"Class '" + type_name() + "' does not support indexing with '[]'"};
     }
 
-    virtual void set_subscript(const bs_obj_ptr &index, const bs_obj_ptr &value) {
+    virtual void set_subscript(interpreter &visitor, const bs_obj_ptr &index, const bs_obj_ptr &value) {
         throw std::runtime_error{"Class '" + type_name() + "' does not support index assignment"};
     }
 };

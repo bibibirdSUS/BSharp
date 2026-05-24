@@ -4,6 +4,7 @@
 
 #include "bs_boolean.h"
 
+#include "../../interpreter/interpreter.h"
 
 
 const bs_boolean *as_boolean(const bs_obj_ptr &obj) {
@@ -29,8 +30,8 @@ bool bs_boolean::to_boolean() const {
     return value_;
 }
 
-bs_obj::bs_obj_ptr bs_boolean::eq(const bs_obj_ptr &rhs) const {
+bs_obj::bs_obj_ptr bs_boolean::eq(interpreter &visitor, const bs_obj_ptr &rhs) const {
     const bs_boolean *rhs_casted = as_boolean(rhs);
-    if (!rhs_casted) return std::make_shared<bs_boolean>(false);
-    return std::make_shared<bs_boolean>(value_ == rhs_casted->value_);
+    if (!rhs_casted) return visitor.get_runtime().false_obj();
+    return value_ == rhs_casted->value_ ? visitor.get_runtime().true_obj() : visitor.get_runtime().false_obj();
 }

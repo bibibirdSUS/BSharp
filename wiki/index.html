@@ -262,6 +262,16 @@ else if score >= 80 do
     result = "B"
 else
     result = "C"</code></pre>
+                    <h3>If 表達式</h3>
+                    <p>
+                        <code>if ... do ... else ...</code>
+                        也可以作為表達式使用，適合用在賦值、函式回傳與其他運算中。
+                    </p>
+                    <pre><code class="language-bsharp">score = 85
+grade = if score >= 60 do "pass" else "fail"
+print(grade)
+
+fn max(a, b) = if a > b do a else b</code></pre>
                 </section>
 
                 <section id="loops">
@@ -481,11 +491,6 @@ y # 錯誤：變數 y 已被銷毀</code></pre>
                         <strong>REPL 技巧</strong>:
                         <ul>
                             <li>輸入空行可觸發執行。</li>
-                            <li>
-                                REPL
-                                會自動顯示最後一個表達式的計算結果，因此在測試時不一定需要使用
-                                <code>print</code>。
-                            </li>
                             <li>輸入 <code>exit</code> 可退出 REPL。</li>
                         </ul>
                     </div>

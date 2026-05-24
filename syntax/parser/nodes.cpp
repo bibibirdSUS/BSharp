@@ -40,12 +40,12 @@ node_ptr boolean_node::copy() const {
     });
 }
 
-bs_obj_ptr none_node::accept(interpreter &visitor, context_ptr ctx) {
+bs_obj_ptr null_node::accept(interpreter &visitor, context_ptr ctx) {
     return visitor.visit(*this);
 }
 
-node_ptr none_node::copy() const {
-    return std::make_unique<none_node>(token{"null", token_type::NULL_LIT, where.start, where.end});
+node_ptr null_node::copy() const {
+    return std::make_unique<null_node>(token{"null", token_type::NULL_LIT, where.start, where.end});
 }
 
 bs_obj_ptr comparison_node::accept(interpreter &visitor, const context_ptr ctx) {
@@ -90,7 +90,7 @@ node_ptr var_assign_node::copy() const {
 }
 
 bs_obj_ptr var_access_node::accept(interpreter &visitor, const context_ptr ctx) {
-    return visitor.visit(*this, ctx);
+    return interpreter::visit(*this, ctx);
 }
 
 node_ptr var_access_node::copy() const {
@@ -111,7 +111,7 @@ bs_obj_ptr if_node::accept(interpreter &visitor, const context_ptr ctx) {
 
 node_ptr if_node::copy() const {
     return std::make_unique<if_node>(condition->copy(), then_branch->copy(),
-                                     else_branch ? else_branch->copy() : nullptr, span{where.start, where.end});
+                                     else_branch ? else_branch->copy() : nullptr, span{where.start, where.end}, is_stmt);
 }
 
 bs_obj_ptr while_node::accept(interpreter &visitor, const context_ptr ctx) {
@@ -132,7 +132,7 @@ node_ptr for_node::copy() const {
 }
 
 bs_obj_ptr fn_node::accept(interpreter &visitor, const context_ptr ctx) {
-    return visitor.visit(*this, ctx);
+    return interpreter::visit(*this, ctx);
 }
 
 node_ptr fn_node::copy() const {
@@ -164,7 +164,7 @@ node_ptr return_node::copy() const {
 }
 
 bs_obj_ptr break_node::accept(interpreter &visitor, const context_ptr ctx) {
-    return visitor.visit(*this);
+    return interpreter::visit(*this);
 }
 
 node_ptr break_node::copy() const {
@@ -172,7 +172,7 @@ node_ptr break_node::copy() const {
 }
 
 bs_obj_ptr continue_node::accept(interpreter &visitor, const context_ptr ctx) {
-    return visitor.visit(*this);
+    return interpreter::visit(*this);
 }
 
 node_ptr continue_node::copy() const {

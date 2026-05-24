@@ -29,7 +29,7 @@ public:
 
     bs_obj_ptr visit(const boolean_node &n) const;
 
-    bs_obj_ptr visit(const none_node &n) const;
+    bs_obj_ptr visit(const null_node &n) const;
 
     bs_obj_ptr visit(const string_node &n);
 
@@ -45,7 +45,7 @@ public:
 
     bs_obj_ptr visit(const var_assign_node &n, const context_ptr &ctx);
 
-    bs_obj_ptr visit(const var_access_node &n, const context_ptr &ctx);
+    static bs_obj_ptr visit(const var_access_node &n, const context_ptr &ctx);
 
     bs_obj_ptr visit(const if_node &n, const context_ptr &ctx);
 

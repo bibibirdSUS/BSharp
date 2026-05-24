@@ -6,7 +6,7 @@
 #include <sstream>
 
 #include "../number/bs_number.h"
-#include "../boolean/bs_boolean.h"
+#include "../../interpreter/interpreter.h"
 
 bs_list::bs_list(std::vector<bs_obj_ptr> elements) : elements_(std::move(elements)) {
 }
@@ -19,7 +19,7 @@ std::string bs_list::type_name() const {
     return "List";
 }
 
-bs_obj::bs_obj_ptr bs_list::subscript(const bs_obj_ptr &index) const {
+bs_obj::bs_obj_ptr bs_list::subscript(interpreter &visitor, const bs_obj_ptr &index) const {
     const auto idx_number = dynamic_cast<const bs_number *>(index.get());
     if (!idx_number)
         throw std::runtime_error{"List indices must be numbers, not '" + index->type_name() + "'"};
@@ -33,13 +33,15 @@ bs_obj::bs_obj_ptr bs_list::subscript(const bs_obj_ptr &index) const {
         idx = static_cast<int>(elements_.size()) + idx;
 
     if (idx < 0 || static_cast<size_t>(idx) >= elements_.size())
-        throw std::runtime_error{"List index out of range: index is " + std::to_string(idx) +
-                                 ", but size is " + std::to_string(size())};
+        throw std::runtime_error{
+            "List index out of range: index is " + std::to_string(idx) +
+            ", but size is " + std::to_string(size())
+        };
 
     return elements_[static_cast<size_t>(idx)];
 }
 
-void bs_list::set_subscript(const bs_obj_ptr &index, const bs_obj_ptr &value) {
+void bs_list::set_subscript(interpreter &visitor, const bs_obj_ptr &index, const bs_obj_ptr &value) {
     const auto idx_number = dynamic_cast<const bs_number *>(index.get());
     if (!idx_number)
         throw std::runtime_error{"List indices must be numbers, not '" + index->type_name() + "'"};
@@ -72,16 +74,16 @@ bool bs_list::to_boolean() const {
     return !elements_.empty();
 }
 
-bs_obj::bs_obj_ptr bs_list::eq(const bs_obj_ptr &rhs) const {
+bs_obj::bs_obj_ptr bs_list::eq(interpreter &visitor, const bs_obj_ptr &rhs) const {
     const auto rhs_casted = dynamic_cast<const bs_list *>(rhs.get());
-    if (!rhs_casted) return std::make_shared<bs_boolean>(false);
-    if (elements_.size() != rhs_casted->elements_.size()) return std::make_shared<bs_boolean>(false);
+    if (!rhs_casted) return visitor.get_runtime().false_obj();
+    if (elements_.size() != rhs_casted->elements_.size()) return visitor.get_runtime().false_obj();
 
     for (size_t i = 0; i < elements_.size(); ++i) {
-        if (!elements_[i]->eq(rhs_casted->elements_[i])->to_boolean())
-            return std::make_shared<bs_boolean>(false);
+        if (!elements_[i]->eq(visitor, rhs_casted->elements_[i])->to_boolean())
+            return visitor.get_runtime().false_obj();
     }
-    return std::make_shared<bs_boolean>(true);
+    return visitor.get_runtime().true_obj();
 }
 
 void bs_list::append(bs_obj_ptr obj) {

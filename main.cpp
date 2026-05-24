@@ -134,15 +134,15 @@ void print_node(const node *n, const int indent = 0) {
         for (int i = 0; i < indent + 1; ++i) std::cout << "  ";
         std::cout << "Body:" << std::endl;
         print_node(for_n->body.get(), indent + 2);
-    } else if (dynamic_cast<const none_node *>(n)) {
+    } else if (dynamic_cast<const null_node *>(n)) {
         std::cout << "None" << std::endl;
     } else
         std::cout << "Unknown Node" << std::endl;
 }
 
-void run(const std::string &input, const std::string &file_name, const std::shared_ptr<context> &ctx,
+bool run(const std::string &input, const std::string &file_name, const std::shared_ptr<context> &ctx,
          const bool debug) {
-    if (input.empty()) return;
+    if (input.empty()) return true;
 
     // lexer
     lexer lexer{input, std::string(file_name)};
@@ -151,7 +151,7 @@ void run(const std::string &input, const std::string &file_name, const std::shar
         tokens = lexer.tokenize();
     } catch (std::exception &e) {
         std::cerr << e.what() << std::endl;
-        return;
+        return false;
     }
 
     if (debug) {
@@ -174,7 +174,7 @@ void run(const std::string &input, const std::string &file_name, const std::shar
         }
     } catch (std::exception &e) {
         std::cerr << e.what() << std::endl;
-        return;
+        return false;
     }
 
     // interpreter
@@ -183,7 +183,10 @@ void run(const std::string &input, const std::string &file_name, const std::shar
         interpreter.eval();
     } catch (std::exception &e) {
         std::cerr << e.what() << std::endl;
+        return false;
     }
+
+    return true;
 }
 
 int run_repl(const bool debug) {
@@ -223,9 +226,7 @@ int run_file(const std::string &path, const bool debug) {
 
     const auto global_context = std::make_shared<context>();
     register_all(global_context);
-    run(input, path, global_context, debug);
-
-    return 0;
+    return run(input, path, global_context, debug) ? 0 : 1;
 }
 
 int main(const int argc, char *argv[]) {

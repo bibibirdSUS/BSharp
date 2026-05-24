@@ -185,9 +185,8 @@ node_ptr parser::if_stmt() {
     }
 
     const position end_pos = else_branch ? else_branch->where.end : then_branch->where.end;
-    return std::make_unique<if_node>(std::move(condition), std::move(then_branch), std::move(else_branch), span{
-                                         start_pos, end_pos
-                                     });
+    return std::make_unique<if_node>(std::move(condition), std::move(then_branch), std::move(else_branch),
+                                     span{start_pos, end_pos}, true);
 }
 
 node_ptr parser::fn_stmt() {
@@ -465,7 +464,7 @@ node_ptr parser::primary() {
 
     if (current().type == token_type::NULL_LIT) {
         const token &t = advance();
-        return std::make_unique<none_node>(t);
+        return std::make_unique<null_node>(t);
     }
 
     if (current().type == token_type::STRING) {
@@ -475,6 +474,10 @@ node_ptr parser::primary() {
 
     if (current().type == token_type::LBRACKET)
         return list_literal();
+
+    if (current().type == token_type::IF)
+        return ternary();
+
 
     throw bs_invalid_syntax_exception{
         "Expected '(', identifier, or literal, but found '" + current().literal + "'",
@@ -501,4 +504,29 @@ node_ptr parser::list_literal() {
         };
     const position end_pos = advance().end;
     return std::make_unique<list_literal_node>(std::move(args), span{start_pos, end_pos});
+}
+
+node_ptr parser::ternary() {
+    const position start_pos = advance().start;
+    node_ptr condition = expr();
+    if (current().type != token_type::DO)
+        throw bs_invalid_syntax_exception{
+            "Expected 'do', but found '" + current().literal + "'", source_code_, current().start, current().end
+        };
+
+    advance();
+
+    node_ptr then_branch = expr();
+    if (current().type != token_type::ELSE)
+        throw bs_invalid_syntax_exception{
+            "Expected 'else' in if expression, but found '" + current().literal + "'",
+            source_code_, current().start, current().end
+        };
+    advance();
+
+    node_ptr false_branch = expr();
+    const position end_pos = false_branch->where.end;
+
+    return std::make_unique<if_node>(std::move(condition), std::move(then_branch), std::move(false_branch),
+                                     span{start_pos, end_pos}, false);
 }

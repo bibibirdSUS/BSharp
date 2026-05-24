@@ -58,7 +58,7 @@ bs_obj_ptr interpreter::visit(const boolean_node &n) const {
     return n.value ? rt_.true_obj() : rt_.false_obj();
 }
 
-bs_obj_ptr interpreter::visit(const none_node &) const {
+bs_obj_ptr interpreter::visit(const null_node &) const {
     return rt_.null_obj();
 }
 
@@ -73,17 +73,17 @@ bs_obj_ptr interpreter::visit(const comparison_node &n, const context_ptr &ctx) 
         bs_obj_ptr result;
 
         switch (n.operators[i]) {
-            case token_type::EQ: result = left->eq(right);
+            case token_type::EQ: result = left->eq(*this, right);
                 break;
-            case token_type::NEQ: result = left->neq(right);
+            case token_type::NEQ: result = left->neq(*this, right);
                 break;
-            case token_type::LESS: result = left->lt(right);
+            case token_type::LESS: result = left->lt(*this, right);
                 break;
-            case token_type::GREATER: result = left->gt(right);
+            case token_type::GREATER: result = left->gt(*this, right);
                 break;
-            case token_type::LE: result = left->le(right);
+            case token_type::LE: result = left->le(*this, right);
                 break;
-            case token_type::GE: result = left->ge(right);
+            case token_type::GE: result = left->ge(*this, right);
                 break;
             default:
                 throw std::runtime_error{"Internal error: Unknown comparison operator"};
@@ -116,17 +116,17 @@ bs_obj_ptr interpreter::visit(const bin_op_node &n, const context_ptr &ctx) {
 
     switch (n.op) {
         case token_type::PLUS:
-            return left->add(right);
+            return left->add(*this, right);
         case token_type::SUBTRACT:
-            return left->sub(right);
+            return left->sub(*this, right);
         case token_type::MULTIPLY:
-            return left->mul(right);
+            return left->mul(*this, right);
         case token_type::DIVISION:
-            return left->div(right);
+            return left->div(*this, right);
         case token_type::MODULO:
-            return left->mod(right);
+            return left->mod(*this, right);
         case token_type::POWER:
-            return left->pow(right);
+            return left->pow(*this, right);
         case token_type::XOR:
             return left->to_boolean() ^ right->to_boolean() ? rt_.true_obj() : rt_.false_obj();
 
@@ -139,9 +139,9 @@ bs_obj_ptr interpreter::visit(const unary_op_node &n, const context_ptr &ctx) {
     const bs_obj_ptr operand = eval(n.operand.get(), ctx);
     switch (n.op) {
         case token_type::PLUS:
-            return operand->pos();
+            return operand->pos(*this);
         case token_type::SUBTRACT:
-            return operand->neg();
+            return operand->neg(*this);
         case token_type::NOT:
             return !operand->to_boolean() ? rt_.true_obj() : rt_.false_obj();
         default:
@@ -150,7 +150,7 @@ bs_obj_ptr interpreter::visit(const unary_op_node &n, const context_ptr &ctx) {
 }
 
 bs_obj_ptr interpreter::visit(const factorial_node &n, const context_ptr &ctx) {
-    return eval(n.operand.get(), ctx)->fact();
+    return eval(n.operand.get(), ctx)->fact(*this);
 }
 
 bs_obj_ptr interpreter::visit(const var_assign_node &n, const context_ptr &ctx) {
@@ -166,17 +166,17 @@ bs_obj_ptr interpreter::visit(const var_assign_node &n, const context_ptr &ctx) 
     bs_obj_ptr result;
 
     switch (n.op) {
-        case token_type::PLUS_EQ: result = current_val->add(value);
+        case token_type::PLUS_EQ: result = current_val->add(*this, value);
             break;
-        case token_type::SUB_EQ: result = current_val->sub(value);
+        case token_type::SUB_EQ: result = current_val->sub(*this, value);
             break;
-        case token_type::MUL_EQ: result = current_val->mul(value);
+        case token_type::MUL_EQ: result = current_val->mul(*this, value);
             break;
-        case token_type::DIV_EQ: result = current_val->div(value);
+        case token_type::DIV_EQ: result = current_val->div(*this, value);
             break;
-        case token_type::MOD_EQ: result = current_val->mod(value);
+        case token_type::MOD_EQ: result = current_val->mod(*this, value);
             break;
-        case token_type::POW_EQ: result = current_val->pow(value);
+        case token_type::POW_EQ: result = current_val->pow(*this, value);
             break;
         default:
             throw std::runtime_error{"Internal error: Unknown assignment operator"};
@@ -208,7 +208,8 @@ bs_obj_ptr interpreter::visit(const if_node &n, const context_ptr &ctx) {
         const auto else_context = std::make_shared<context>(ctx);
         result = eval(n.else_branch.get(), else_context);
     }
-    return result;
+
+    return n.is_stmt ? rt_.null_obj() : result;
 }
 
 bs_obj_ptr interpreter::visit(const while_node &n, const context_ptr &ctx) {
@@ -239,7 +240,7 @@ bs_obj_ptr interpreter::visit(const for_node &n, const context_ptr &ctx) {
     const bs_obj_ptr start = eval(n.start.get(), loop_context);
     const bs_obj_ptr end = eval(n.end.get(), loop_context);
 
-    const bool default_increase = start->lt(end)->to_boolean();
+    const bool default_increase = start->lt(*this, end)->to_boolean();
 
     for (;;) {
         const bs_obj_ptr current_val = loop_context->get(n.name);
@@ -249,16 +250,16 @@ bs_obj_ptr interpreter::visit(const for_node &n, const context_ptr &ctx) {
 
         if (n.step) {
             step = eval(n.step.get(), loop_context);
-            if (step->eq(rt_.get_number(0))->to_boolean())
+            if (step->eq(*this, rt_.get_number(0))->to_boolean())
                 throw std::runtime_error("For loop step cannot be zero");
-            increase = step->gt(rt_.get_number(0))->to_boolean();
+            increase = step->gt(*this, rt_.get_number(0))->to_boolean();
         } else {
             step = rt_.get_number(default_increase ? 1.0 : -1.0);
             increase = default_increase;
         }
 
-        if (increase && current_val->ge(end)->to_boolean()) break;
-        if (!increase && current_val->le(end)->to_boolean()) break;
+        if (increase && current_val->ge(*this, end)->to_boolean()) break;
+        if (!increase && current_val->le(*this, end)->to_boolean()) break;
 
         try {
             auto iteration_context = std::make_shared<context>(loop_context);
@@ -270,7 +271,7 @@ bs_obj_ptr interpreter::visit(const for_node &n, const context_ptr &ctx) {
         }
 
         const bs_obj_ptr val_to_increment = loop_context->get(n.name);
-        loop_context->set(n.name, val_to_increment->add(step));
+        loop_context->set(n.name, val_to_increment->add(*this, step));
     }
     return rt_.null_obj();
 }
@@ -331,7 +332,7 @@ bs_obj_ptr interpreter::visit(const list_literal_node &n, const context_ptr &ctx
 bs_obj_ptr interpreter::visit(const subscript_node &n, const context_ptr &ctx) {
     const bs_obj_ptr left = eval(n.left.get(), ctx);
     const bs_obj_ptr index = eval(n.index.get(), ctx);
-    return left->subscript(index);
+    return left->subscript(*this, index);
 }
 
 bs_obj_ptr interpreter::visit(const subscript_assign_node &n, const context_ptr &ctx) {
@@ -341,25 +342,25 @@ bs_obj_ptr interpreter::visit(const subscript_assign_node &n, const context_ptr 
 
     switch (n.op) {
         case token_type::EQUALS:
-            left->set_subscript(index, value);
+            left->set_subscript(*this, index, value);
             break;
         case token_type::PLUS_EQ:
-            left->set_subscript(index, left->subscript(index)->add(value));
+            left->set_subscript(*this, index, left->subscript(*this, index)->add(*this, value));
             break;
         case token_type::SUB_EQ:
-            left->set_subscript(index, left->subscript(index)->sub(value));
+            left->set_subscript(*this, index, left->subscript(*this, index)->sub(*this, value));
             break;
         case token_type::MUL_EQ:
-            left->set_subscript(index, left->subscript(index)->mul(value));
+            left->set_subscript(*this, index, left->subscript(*this, index)->mul(*this, value));
             break;
         case token_type::DIV_EQ:
-            left->set_subscript(index, left->subscript(index)->div(value));
+            left->set_subscript(*this, index, left->subscript(*this, index)->div(*this, value));
             break;
         case token_type::POW_EQ:
-            left->set_subscript(index, left->subscript(index)->pow(value));
+            left->set_subscript(*this, index, left->subscript(*this, index)->pow(*this, value));
             break;
         case token_type::MOD_EQ:
-            left->set_subscript(index, left->subscript(index)->mod(value));
+            left->set_subscript(*this, index, left->subscript(*this, index)->mod(*this, value));
             break;
         default:
             throw std::runtime_error{"Internal error: Unknown subscript assignment operator"};

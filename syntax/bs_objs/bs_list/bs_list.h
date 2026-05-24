@@ -15,15 +15,15 @@ public:
 
     [[nodiscard]] std::string type_name() const override;
 
-    bs_obj_ptr subscript(const bs_obj_ptr &index) const override;
+    bs_obj_ptr subscript(interpreter &visitor, const bs_obj_ptr &index) const override;
 
-    void set_subscript(const bs_obj_ptr &index, const bs_obj_ptr &value) override;
+    void set_subscript(interpreter &visitor, const bs_obj_ptr &index, const bs_obj_ptr &value) override;
 
     [[nodiscard]] std::string to_string() const override;
 
     [[nodiscard]] bool to_boolean() const override;
 
-    [[nodiscard]] bs_obj_ptr eq(const bs_obj_ptr &rhs) const override;
+    [[nodiscard]] bs_obj_ptr eq(interpreter &visitor, const bs_obj_ptr &rhs) const override;
 
     void append(bs_obj_ptr obj);
 

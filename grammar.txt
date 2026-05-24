@@ -41,7 +41,9 @@ primary =
   | 'true'
   | 'false'
   | 'null'
+  | if_expr
   | '(' expr ')'
   | list_literal
 
 list_literal = '[' args? ']'
+if_expr = 'if' expr 'do' expr 'else' expr

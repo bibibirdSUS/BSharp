@@ -5,6 +5,7 @@
 #include "bs_string.h"
 #include "../boolean/bs_boolean.h"
 #include "../number/bs_number.h"
+#include "../../interpreter/interpreter.h"
 
 bs_string::bs_string(std::string value) : str_(std::move(value)) {
 }
@@ -25,28 +26,28 @@ bool bs_string::to_boolean() const {
     return !str_.empty();
 }
 
-bs_obj::bs_obj_ptr bs_string::add(const bs_obj_ptr &rhs) const {
-    return std::make_shared<bs_string>(str_ + rhs->to_string());
+bs_obj::bs_obj_ptr bs_string::add(interpreter &visitor, const bs_obj_ptr &rhs) const {
+    return visitor.get_runtime().get_string(str_ + rhs->to_string());
 }
 
-bs_obj::bs_obj_ptr bs_string::mul(const bs_obj_ptr &rhs) const {
+bs_obj::bs_obj_ptr bs_string::mul(interpreter &visitor, const bs_obj_ptr &rhs) const {
     if (const auto rhs_casted = dynamic_cast<const bs_number *>(rhs.get()))
         if (rhs_casted->value() >= 0 && bs_number::is_int(rhs_casted->value())) {
             std::string s;
             s.reserve(str_.size() * static_cast<std::string::size_type>(rhs_casted->value()));
             for (int i = 0; i < rhs_casted->value(); ++i) s += str_;
-            return std::make_shared<bs_string>(std::move(s));
+            return visitor.get_runtime().get_string(s);
         }
-    return bs_obj::mul(rhs);
+    return bs_obj::mul(visitor, rhs);
 }
 
-bs_obj::bs_obj_ptr bs_string::eq(const bs_obj_ptr &rhs) const {
+bs_obj::bs_obj_ptr bs_string::eq(interpreter &visitor, const bs_obj_ptr &rhs) const {
     if (const auto rhs_casted = dynamic_cast<const bs_string *>(rhs.get()))
-        return std::make_shared<bs_boolean>(str_ == rhs_casted->str_);
-    return std::make_shared<bs_boolean>(false);
+        return (str_ == rhs_casted->str_) ? visitor.get_runtime().true_obj() : visitor.get_runtime().false_obj();
+    return visitor.get_runtime().false_obj();
 }
 
-bs_obj::bs_obj_ptr bs_string::subscript(const bs_obj_ptr &index) const {
+bs_obj::bs_obj_ptr bs_string::subscript(interpreter &visitor, const bs_obj_ptr &index) const {
     if (const auto idx_number = dynamic_cast<const bs_number *>(index.get())) {
         const double value = idx_number->value();
         if (!bs_number::is_int(value))
@@ -58,7 +59,7 @@ bs_obj::bs_obj_ptr bs_string::subscript(const bs_obj_ptr &index) const {
         if (idx < 0 || static_cast<size_t>(idx) >= str_.size())
             throw std::runtime_error{"String index out of range"};
 
-        return std::make_shared<bs_string>(std::string(1, str_[idx]));
+        return visitor.get_runtime().get_string(std::string(1, str_[idx]));
     }
     throw std::runtime_error{"String indices must be numbers"};
 }

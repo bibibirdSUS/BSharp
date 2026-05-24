@@ -19,7 +19,7 @@ public:
 
     [[nodiscard]] std::string type_name() const override;
 
-    [[nodiscard]] bs_obj_ptr eq(const bs_obj_ptr &rhs) const override;
+    [[nodiscard]] bs_obj_ptr eq(interpreter &visitor, const bs_obj_ptr &rhs) const override;
 
 private:
     const bool value_;

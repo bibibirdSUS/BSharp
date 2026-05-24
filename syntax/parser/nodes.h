@@ -65,8 +65,8 @@ struct boolean_node final : node {
     [[nodiscard]] node_ptr copy() const override;
 };
 
-struct none_node final : node {
-    explicit none_node(const token &t) : node(span{t.start, t.end}) {
+struct null_node final : node {
+    explicit null_node(const token &t) : node(span{t.start, t.end}) {
     }
 
     bs_obj_ptr accept(interpreter &visitor, context_ptr ctx) override;
@@ -178,10 +178,11 @@ struct if_node final : node {
     node_ptr condition;
     node_ptr then_branch;
     node_ptr else_branch;
+    bool is_stmt;
 
-    if_node(node_ptr condition, node_ptr then_branch, node_ptr else_branch, span where)
+    if_node(node_ptr condition, node_ptr then_branch, node_ptr else_branch, span where, bool is_stmt)
         : node(std::move(where)), condition(std::move(condition)),
-          then_branch(std::move(then_branch)), else_branch(std::move(else_branch)) {
+          then_branch(std::move(then_branch)), else_branch(std::move(else_branch)), is_stmt(is_stmt) {
     }
 
     bs_obj_ptr accept(interpreter &visitor, context_ptr ctx) override;
