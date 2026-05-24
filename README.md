@@ -90,6 +90,26 @@ fn fib(n) do
 print(fib(10))
 ```
 
+### 列表與字串
+
+```bsharp
+# 列表操作
+a = [1, 2, 3]
+a[0] = 10
+print(a[0])    # 10
+print(a[-1])   # 3 (支援負數索引)
+
+# 字串操作
+s = "Hello"
+print(s[0])    # "H"
+print(s + " World") # "Hello World"
+print("A" * 3) # "AAA"
+
+# 鏈式呼叫
+fn get_list() = [1, 2, 3]
+print(get_list()[0]) # 1
+```
+
 ## 說明文件
 
 更多詳細資訊請參考 [Wiki](wiki/index.html)。

@@ -59,6 +59,16 @@
                             >
                         </li>
                         <li>
+                            <a href="#lists-strings"
+                                ><i class="fas fa-list"></i> 列表與字串</a
+                            >
+                        </li>
+                        <li>
+                            <a href="#chaining"
+                                ><i class="fas fa-link"></i> 鏈式呼叫</a
+                            >
+                        </li>
+                        <li>
                             <a href="#builtins"
                                 ><i class="fas fa-box-open"></i> 內建函式</a
                             >
@@ -116,6 +126,16 @@
                                 <td>Boolean</td>
                                 <td><code>true</code>, <code>false</code></td>
                                 <td>布林值</td>
+                            </tr>
+                            <tr>
+                                <td>String</td>
+                                <td><code>"Hello"</code></td>
+                                <td>字串類型</td>
+                            </tr>
+                            <tr>
+                                <td>List</td>
+                                <td><code>[1, 2, 3]</code></td>
+                                <td>動態列表，可包含不同類型</td>
                             </tr>
                             <tr>
                                 <td>Null</td>
@@ -315,6 +335,60 @@ print(factorial(5)) # 輸出 120</code></pre>
                     </div>
                 </section>
 
+                <section id="lists-strings">
+                    <h2>列表與字串</h2>
+
+                    <h3>列表 (List)</h3>
+                    <p>列表是動態的資料結構，可以存取不同類型的元素。</p>
+                    <pre><code class="language-bsharp"># 建立列表
+a = [1, "two", true]
+
+# 存取元素 (支援負數索引)
+print(a[0])    # 1
+print(a[-1])   # true
+
+# 修改元素
+a[0] = 100
+print(a)       # [100, "two", true]
+
+# 列表比較 (值比較)
+assert([1, 2] == [1, 2]) # true</code></pre>
+
+                    <h3>字串 (String)</h3>
+                    <p>字串是不可變的序列，支援索引讀取與基本運算。</p>
+                    <pre><code class="language-bsharp">s = "BSharp"
+
+# 索引讀取
+print(s[0])    # "B"
+print(s[-1])   # "p"
+
+# 字串運算
+print("Hello" + " " + "World") # 拼接
+print("Hi" * 3)                # 重複: "HiHiHi"</code></pre>
+                </section>
+
+                <section id="chaining">
+                    <h2>鏈式呼叫 (Chaining)</h2>
+                    <p>
+                        BSharp
+                        支援高度靈活的鏈式操作，允許連續進行函式呼叫與下標存取。
+                    </p>
+                    <pre><code class="language-bsharp"># 連續函式呼叫 (Currying 風格)
+fn get_adder(x) do
+    fn adder(y) = x + y
+    return adder
+
+print(get_adder(10)(5)) # 輸出 15
+
+# 呼叫結果直接進行下標存取
+fn get_list() = [10, 20, 30]
+print(get_list()[0])    # 輸出 10
+
+# 下標結果直接進行呼叫
+funcs = [get_adder(10)]
+print(funcs[0](20))     # 輸出 30</code></pre>
+                </section>
+
                 <section id="builtins">
                     <h2>內建函式</h2>
                     <p>BSharp 提供了一些內建函式來協助開發：</p>
@@ -346,6 +420,22 @@ print(factorial(5)) # 輸出 120</code></pre>
                             <tr>
                                 <td><code>assert(cond)</code></td>
                                 <td>斷言條件為真，若為假則拋出錯誤。</td>
+                            </tr>
+                            <tr>
+                                <td><code>time()</code></td>
+                                <td>返回當前系統時間的毫秒數 (Number)。</td>
+                            </tr>
+                            <tr>
+                                <td><code>int(val)</code></td>
+                                <td>將字串或數字轉為整數。</td>
+                            </tr>
+                            <tr>
+                                <td><code>number(val)</code></td>
+                                <td>將字串轉為數字 (Float)。</td>
+                            </tr>
+                            <tr>
+                                <td><code>string(val)</code></td>
+                                <td>將任何物件轉為其字串表示。</td>
                             </tr>
                         </tbody>
                     </table>
