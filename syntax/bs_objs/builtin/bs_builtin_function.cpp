@@ -18,5 +18,5 @@ bs_obj::bs_obj_ptr bs_builtin_function::call(interpreter &visitor, const std::ve
 }
 
 std::string bs_builtin_function::type_name() const {
-    return "<Function>";
+    return "Function";
 }

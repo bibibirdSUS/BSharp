@@ -23,8 +23,9 @@ private:
     size_t index_;
     position position_;
     char current_char_;
-    std::stack<int> indent_stack_;
+    std::stack<size_t> indent_stack_;
     bool is_line_start_;
+    int bracket_depth_;
 
     void advance();
 

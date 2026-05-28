@@ -20,7 +20,7 @@ const char *bs_exception::what() const noexcept {
     std::stringstream ss;
     ss << type_name() << ": " << msg_ << '\n';
 
-    ss << "Caused by: " << start_.file_name << " from " << start_.line + 1 << ":" << start_.column + 1 
+    ss << "caused by: " << start_.file_name << " from " << start_.line + 1 << ":" << start_.column + 1 
        << " to " << end_.line + 1 << ":" << end_.column + 1 << "\n";
 
     for (const auto & it : std::views::reverse(call_stack_))

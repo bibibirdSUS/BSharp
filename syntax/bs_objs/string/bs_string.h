@@ -27,6 +27,8 @@ public:
 
     [[nodiscard]] bs_obj_ptr subscript(interpreter &visitor, const bs_obj_ptr &index) const override;
 
+    [[nodiscard]] size_t len() const override;
+
 private:
     std::string str_;
 };

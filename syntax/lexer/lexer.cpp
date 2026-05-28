@@ -11,11 +11,13 @@
 
 #include "../bs_objs/exception/bs_invalid_syntax_exception.h"
 
-std::string_view operators = "+-*/%^!()=<>:~,[]";
+std::string_view operators = "+-*/%^!()=<>:~,[].";
+std::string_view brackets_left = "([{";
+std::string_view brackets_right = ")]}";
 
 lexer::lexer(std::string input, std::string &&file_name) : input_(std::move(input)), file_name_(std::move(file_name)),
                                                            index_(0), position_(file_name_, 0, 0),
-                                                           is_line_start_(true) {
+                                                           is_line_start_(true), bracket_depth_(0) {
     indent_stack_.push(0);
     current_char_ = !input_.empty() ? input_[index_] : 0;
 }
@@ -48,6 +50,7 @@ token_type get_operator_type(const std::string &s) {
     if (s == "^=") return token_type::POW_EQ;
     if (s == "[") return token_type::LBRACKET;
     if (s == "]") return token_type::RBRACKET;
+    if (s == "...") return token_type::ELLIPSIS;
 
     return token_type::NONE;
 }
@@ -93,19 +96,21 @@ std::vector<token> lexer::tokenize() {
                 continue;
             }
 
-            if (indent > indent_stack_.top()) {
-                indent_stack_.push(indent);
-                tokens.emplace_back("INDENT", token_type::INDENT, position_, position_);
-            } else if (indent < indent_stack_.top()) {
-                while (!indent_stack_.empty() && indent < indent_stack_.top()) {
-                    indent_stack_.pop();
-                    tokens.emplace_back("DEDENT", token_type::DEDENT, position_, position_);
+            if (bracket_depth_ == 0) {
+                if (indent > indent_stack_.top()) {
+                    indent_stack_.push(indent);
+                    tokens.emplace_back("INDENT", token_type::INDENT, position_, position_);
+                } else if (indent < indent_stack_.top()) {
+                    while (!indent_stack_.empty() && indent < indent_stack_.top()) {
+                        indent_stack_.pop();
+                        tokens.emplace_back("DEDENT", token_type::DEDENT, position_, position_);
+                    }
+                    if (indent_stack_.empty() || indent != indent_stack_.top())
+                        throw bs_invalid_syntax_exception{
+                            "invalid indentation: dedent does not match any outer indentation level",
+                            input_, position_, position_
+                        };
                 }
-                if (indent_stack_.empty() || indent != indent_stack_.top())
-                    throw bs_invalid_syntax_exception{
-                        "Invalid indentation: dedent does not match any outer indentation level",
-                        input_, position_, position_
-                    };
             }
 
             is_line_start_ = false;
@@ -114,16 +119,17 @@ std::vector<token> lexer::tokenize() {
         else if (current_char_ == '\n') {
             const position start_pos = position_;
             advance();
-            tokens.emplace_back("\n", token_type::NEWLINE, start_pos, position_);
+            if (bracket_depth_ == 0)
+                tokens.emplace_back("\n", token_type::NEWLINE, start_pos, position_);
             is_line_start_ = true;
         } else if (current_char_ == '"') {
             const position start_pos = position_;
             advance();
             const std::string str = make_string();
             if (current_char_ == 0)
-                throw bs_invalid_syntax_exception{"Unterminated string literal", input_, position_, position_};
+                throw bs_invalid_syntax_exception{"unterminated string literal", input_, position_, position_};
             if (current_char_ == '\r' || current_char_ == '\n')
-                throw bs_invalid_syntax_exception{"Unterminated string literal", input_, position_, position_};
+                throw bs_invalid_syntax_exception{"unterminated string literal", input_, position_, position_};
             advance();
             tokens.emplace_back(str, token_type::STRING, start_pos, position_);
         } else if (current_char_ == '_' || isalpha(static_cast<unsigned char>(current_char_))) {
@@ -212,6 +218,31 @@ std::string lexer::make_operator() {
     ) {
         op += current_char_;
         advance();
+    } else if (first == '.') {
+        const position second_dot_pos = position_;
+        if (current_char_ != '.')
+            throw bs_invalid_syntax_exception{
+                "expected '...' for ellipsis, but found '.'",
+                input_, second_dot_pos, position_
+            };
+
+        advance();
+        if (current_char_ != '.')
+            throw bs_invalid_syntax_exception{
+                "expected '...' for ellipsis, but found '..'",
+                input_, second_dot_pos, position_
+            };
+
+        advance();
+        op = "...";
+    }
+
+
+    if (op.length() == 1) {
+        if (const char c = op[0]; brackets_right.find(c) != std::string_view::npos)
+            bracket_depth_--;
+        else if (brackets_left.find(c) != std::string_view::npos)
+            bracket_depth_++;
     }
 
     return op;

@@ -41,7 +41,7 @@ bs_obj_ptr interpreter::eval() {
 
 bs_obj_ptr interpreter::eval(const node *n, const context_ptr &ctx) {
     if (n == nullptr)
-        throw std::runtime_error{"Internal error: null AST node"};
+        throw std::runtime_error{"internal error: null AST node"};
 
     try {
         return const_cast<node *>(n)->accept(*this, ctx);
@@ -86,7 +86,7 @@ bs_obj_ptr interpreter::visit(const comparison_node &n, const context_ptr &ctx) 
             case token_type::GE: result = left->ge(*this, right);
                 break;
             default:
-                throw std::runtime_error{"Internal error: Unknown comparison operator"};
+                throw std::runtime_error{"internal error: unknown comparison operator"};
         }
 
         if (!result->to_boolean())
@@ -131,7 +131,7 @@ bs_obj_ptr interpreter::visit(const bin_op_node &n, const context_ptr &ctx) {
             return left->to_boolean() ^ right->to_boolean() ? rt_.true_obj() : rt_.false_obj();
 
         default:
-            throw std::runtime_error{"Internal error: Unknown binary operator"};
+            throw std::runtime_error{"internal error: unknown binary operator"};
     }
 }
 
@@ -145,7 +145,7 @@ bs_obj_ptr interpreter::visit(const unary_op_node &n, const context_ptr &ctx) {
         case token_type::NOT:
             return !operand->to_boolean() ? rt_.true_obj() : rt_.false_obj();
         default:
-            throw std::runtime_error{"Internal error: Unknown unary operator"};
+            throw std::runtime_error{"internal error: unknown unary operator"};
     }
 }
 
@@ -179,7 +179,7 @@ bs_obj_ptr interpreter::visit(const var_assign_node &n, const context_ptr &ctx) 
         case token_type::POW_EQ: result = current_val->pow(*this, value);
             break;
         default:
-            throw std::runtime_error{"Internal error: Unknown assignment operator"};
+            throw std::runtime_error{"internal error: unknown assignment operator"};
     }
 
     ctx->set(n.name, result);
@@ -251,7 +251,7 @@ bs_obj_ptr interpreter::visit(const for_node &n, const context_ptr &ctx) {
         if (n.step) {
             step = eval(n.step.get(), loop_context);
             if (step->eq(*this, rt_.get_number(0))->to_boolean())
-                throw std::runtime_error("For loop step cannot be zero");
+                throw std::runtime_error("for loop step cannot be zero");
             increase = step->gt(*this, rt_.get_number(0))->to_boolean();
         } else {
             step = rt_.get_number(default_increase ? 1.0 : -1.0);
@@ -299,7 +299,7 @@ bs_obj_ptr interpreter::visit(const call_node &n, const context_ptr &ctx) {
 
 
     call_stack_guard guard{call_stack_, std::move(call_name), n.where.start, n.where.end};
-    if (call_stack_.size() > 1000) throw std::runtime_error{"Stack Overflow: Maximum recursion depth exceeded"};
+    if (call_stack_.size() > 1000) throw std::runtime_error{"stack overflow: maximum recursion depth exceeded"};
     return func_obj->call(*this, args);
 }
 
@@ -363,7 +363,7 @@ bs_obj_ptr interpreter::visit(const subscript_assign_node &n, const context_ptr 
             left->set_subscript(*this, index, left->subscript(*this, index)->mod(*this, value));
             break;
         default:
-            throw std::runtime_error{"Internal error: Unknown subscript assignment operator"};
+            throw std::runtime_error{"internal error: unknown subscript assignment operator"};
     }
     return value;
 }

@@ -25,6 +25,12 @@ public:
 
     [[nodiscard]] bs_obj_ptr eq(interpreter &visitor, const bs_obj_ptr &rhs) const override;
 
+    [[nodiscard]] size_t len() const override;
+
+    [[nodiscard]] bs_obj_ptr add(interpreter &visitor, const bs_obj_ptr &rhs) const override;
+
+    [[nodiscard]] bs_obj_ptr mul(interpreter &visitor, const bs_obj_ptr &rhs) const override;
+
     void append(bs_obj_ptr obj);
 
     size_t size() const;

@@ -4,21 +4,97 @@
 
 #ifndef BSHARP_BUILTINS_H
 #define BSHARP_BUILTINS_H
+
 #include <functional>
-#include <iostream>
 #include <chrono>
+#include <iostream>
+
 #include "bs_builtin_function.h"
-#include "../../interpreter/context.h"
+
 
 typedef std::function<bs_obj_ptr(interpreter &, const std::vector<bs_obj_ptr> &)> native_fn;
 typedef const std::vector<bs_obj_ptr> arg;
 
-static void register_fn(const std::shared_ptr<context> &global_ctx, const std::string &name, const native_fn &func) {
-    global_ctx->define(name, std::make_shared<bs_builtin_function>(name, func));
+namespace {
+    void register_fn(const std::shared_ptr<context> &global_ctx, const std::string &name, const native_fn &func) {
+        global_ctx->define(name, std::make_shared<bs_builtin_function>(name, func));
+    }
+
+    std::string argument_word(const size_t count) {
+        return count == 1 ? "argument" : "arguments";
+    }
+
+    void expect_arity(const std::string &name, const size_t actual, const size_t expected) {
+        if (actual != expected)
+            throw std::runtime_error{
+                name + "() expects " + std::to_string(expected) + " " + argument_word(expected) +
+                ", but got " + std::to_string(actual)
+            };
+    }
+
+    void expect_arity_range(const std::string &name, const size_t actual, const size_t min, const size_t max) {
+        if (actual < min || actual > max)
+            throw std::runtime_error{
+                name + "() expects " + std::to_string(min) + " to " + std::to_string(max) +
+                " arguments, but got " + std::to_string(actual)
+            };
+    }
+
+    int64_t expect_integer_arg(const std::string &name, arg &args, const size_t index) {
+        const auto number = dynamic_cast<const bs_number *>(args[index].get());
+        if (!number)
+            throw std::runtime_error{
+                name + "() argument " + std::to_string(index + 1) + " must be an integer, got " +
+                args[index]->type_name()
+            };
+
+        const double value = number->value();
+        if (!bs_number::is_int(value))
+            throw std::runtime_error{
+                name + "() argument " + std::to_string(index + 1) +
+                " must be an integer, got " + number->to_string()
+            };
+        if (value < static_cast<double>(std::numeric_limits<int64_t>::min()) ||
+            value >= static_cast<double>(std::numeric_limits<int64_t>::max()))
+            throw std::runtime_error{name + "() argument " + std::to_string(index + 1) + " is outside the int64 range"};
+
+        return static_cast<int64_t>(value);
+    }
+
+    int expect_shift_arg(const std::string &name, arg &args, const size_t index) {
+        const int64_t shift = expect_integer_arg(name, args, index);
+        if (shift < 0 || shift > 63)
+            throw std::runtime_error{
+                name + "() shift count must be between 0 and 63, got " + std::to_string(shift)
+            };
+        return static_cast<int>(shift);
+    }
+
+    void register_bitwise_binary(const std::shared_ptr<context> &global_ctx, const std::string &name,
+                                 const char op) {
+        register_fn(global_ctx, name, [name, op](interpreter &visitor, arg &args) {
+            expect_arity(name, args.size(), 2);
+            const int64_t lhs = expect_integer_arg(name, args, 0);
+            const int64_t rhs = expect_integer_arg(name, args, 1);
+
+            int64_t result = 0;
+            switch (op) {
+                case '&': result = lhs & rhs;
+                    break;
+                case '|': result = lhs | rhs;
+                    break;
+                case '^': result = lhs ^ rhs;
+                    break;
+                default:
+                    throw std::runtime_error{"internal error: unknown bitwise builtin"};
+            }
+
+            return visitor.get_runtime().get_number(static_cast<double>(result));
+        });
+    }
 }
 
 static void register_all(const std::shared_ptr<context> &global_ctx) {
-    // print
     register_fn(global_ctx, "print", [](interpreter &visitor, arg &args) {
         for (size_t i = 0; i < args.size(); ++i) {
             std::cout << args[i]->to_string();
@@ -28,12 +104,9 @@ static void register_all(const std::shared_ptr<context> &global_ctx) {
         std::cout << std::endl;
         return visitor.get_runtime().null_obj();
     });
-    // input
+
     register_fn(global_ctx, "input", [](interpreter &visitor, arg &args) {
-        if (args.size() > 1)
-            throw std::runtime_error{
-                "Function 'input' expects 0 or 1 arguments, but " + std::to_string(args.size()) + " were given."
-            };
+        expect_arity_range("input", args.size(), 0, 1);
 
         if (!args.empty()) std::cout << args[0]->to_string() << std::endl;
         std::string input;
@@ -41,26 +114,21 @@ static void register_all(const std::shared_ptr<context> &global_ctx) {
 
         return visitor.get_runtime().get_string(input);
     });
-    // type
+
     register_fn(global_ctx, "type", [](interpreter &visitor, arg &args) {
-        if (args.size() != 1)
-            throw std::runtime_error{
-                "Function 'type' expects 1 arguments, but " + std::to_string(args.size()) + " were given."
-            };
+        expect_arity("type", args.size(), 1);
         return visitor.get_runtime().get_string(args[0]->type_name());
     });
-    // assert
+
     register_fn(global_ctx, "assert", [](interpreter &visitor, arg &args) {
         for (auto &bools: args)
             if (!bools->to_boolean())
-                throw std::runtime_error{"Assertion failed"};
+                throw std::runtime_error{"assertion failed"};
         return visitor.get_runtime().null_obj();
     });
-    // time
-    register_fn(global_ctx, "time", [](interpreter &visitor, const std::vector<bs_obj_ptr> &args) {
-        if (!args.empty())
-            throw std::runtime_error(
-                "time() expects 0 arguments, but " + std::to_string(args.size()) + " were given.");
+
+    register_fn(global_ctx, "time", [](interpreter &visitor, arg &args) {
+        expect_arity("time", args.size(), 0);
 
         const auto now = std::chrono::steady_clock::now();
         const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch());
@@ -68,40 +136,65 @@ static void register_all(const std::shared_ptr<context> &global_ctx) {
         const auto ms = static_cast<double>(duration.count());
         return visitor.get_runtime().get_number(ms);
     });
-    // string (will be removed when string has a ctor)
-    register_fn(global_ctx, "string", [](interpreter &visitor, const std::vector<bs_obj_ptr> &args) {
-        if (args.size() != 1)
-            throw std::runtime_error{
-                "string() expects 1 argument, but " + std::to_string(args.size()) + " were given."
-            };
 
+    register_fn(global_ctx, "string", [](interpreter &visitor, arg &args) {
+        expect_arity("string", args.size(), 1);
         return visitor.get_runtime().get_string(args[0]->to_string());
     });
-    // int
-    register_fn(global_ctx, "int", [](interpreter &visitor, const std::vector<bs_obj_ptr> &args) {
-        if (args.size() != 1)
-            throw std::runtime_error{
-                "int() expects 1 argument, but " + std::to_string(args.size()) + " were given."
-            };
+
+    register_fn(global_ctx, "int", [](interpreter &visitor, arg &args) {
+        expect_arity("int", args.size(), 1);
         if (args[0]->type_name() != "String" && args[0]->type_name() != "Number")
-            throw std::runtime_error{
-                "cannot cast " + args[0]->type_name() + " to an integer"
-            };
-        return visitor.get_runtime().get_number(std::stoi(args[0]->to_string()));
+            throw std::runtime_error{"cannot convert " + args[0]->type_name() + " to Integer"};
+        try {
+            return visitor.get_runtime().get_number(std::stoi(args[0]->to_string()));
+        } catch (const std::exception &) {
+            throw std::runtime_error{"cannot convert '" + args[0]->to_string() + "' to Integer"};
+        }
     });
-    // number
-    register_fn(global_ctx, "number", [](interpreter &visitor, const std::vector<bs_obj_ptr> &args) {
-        if (args.size() != 1)
-            throw std::runtime_error{
-                "number() expects 1 argument, but " + std::to_string(args.size()) + " were given."
-            };
+
+    register_fn(global_ctx, "number", [](interpreter &visitor, arg &args) {
+        expect_arity("number", args.size(), 1);
         if (args[0]->type_name() != "String" && args[0]->type_name() != "Number")
-            throw std::runtime_error{
-                "cannot cast " + args[0]->type_name() + " to a number"
-            };
-        return visitor.get_runtime().get_number(std::stod(args[0]->to_string()));
+            throw std::runtime_error{"cannot convert " + args[0]->type_name() + " to Number"};
+        try {
+            return visitor.get_runtime().get_number(std::stod(args[0]->to_string()));
+        } catch (const std::exception &) {
+            throw std::runtime_error{"cannot convert '" + args[0]->to_string() + "' to Number"};
+        }
+    });
+
+    register_fn(global_ctx, "len", [](interpreter &visitor, arg &args) {
+        expect_arity("len", args.size(), 1);
+        return visitor.get_runtime().get_number(static_cast<double>(args[0]->len()));
+    });
+
+    // Bitwise helpers until bitwise operators become syntax.
+    register_bitwise_binary(global_ctx, "bit_and", '&');
+    register_bitwise_binary(global_ctx, "bit_or", '|');
+    register_bitwise_binary(global_ctx, "bit_xor", '^');
+
+    register_fn(global_ctx, "bit_not", [](interpreter &visitor, arg &args) {
+        expect_arity("bit_not", args.size(), 1);
+        return visitor.get_runtime().get_number(static_cast<double>(~expect_integer_arg("bit_not", args, 0)));
+    });
+    register_fn(global_ctx, "bnot", [](interpreter &visitor, arg &args) {
+        expect_arity("bnot", args.size(), 1);
+        return visitor.get_runtime().get_number(static_cast<double>(~expect_integer_arg("bnot", args, 0)));
+    });
+
+    register_fn(global_ctx, "lshift", [](interpreter &visitor, arg &args) {
+        expect_arity("lshift", args.size(), 2);
+        const int64_t value = expect_integer_arg("lshift", args, 0);
+        const int shift = expect_shift_arg("lshift", args, 1);
+        return visitor.get_runtime().get_number(static_cast<double>(value << shift));
+    });
+    register_fn(global_ctx, "rshift", [](interpreter &visitor, arg &args) {
+        expect_arity("rshift", args.size(), 2);
+        const int64_t value = expect_integer_arg("rshift", args, 0);
+        const int shift = expect_shift_arg("rshift", args, 1);
+        return visitor.get_runtime().get_number(static_cast<double>(value >> shift));
     });
 }
-
 
 #endif //BSHARP_BUILTINS_H

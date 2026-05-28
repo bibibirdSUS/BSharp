@@ -26,7 +26,7 @@ public:
 
     bs_obj_ptr get_number(double value) const;
 
-    static bs_obj_ptr get_function(const std::string &name, const std::vector<std::string> &params,
+    static bs_obj_ptr get_function(const std::string &name, const std::vector<parameter> &params,
                                    const node_ptr &body,
                                    const context_ptr &closure);
 

@@ -216,7 +216,7 @@ int run_repl(const bool debug) {
 int run_file(const std::string &path, const bool debug) {
     std::ifstream file(path);
     if (!file.is_open()) {
-        std::cerr << "Could not open file: " << path << std::endl;
+        std::cerr << "could not open file: " << path << std::endl;
         return 1;
     }
 
@@ -229,11 +229,30 @@ int run_file(const std::string &path, const bool debug) {
     return run(input, path, global_context, debug) ? 0 : 1;
 }
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
+void init_terminal_encoding() {
+#ifdef _WIN32
+    SetConsoleOutputCP(65001);
+    SetConsoleCP(65001);
+
+    if (const auto hOut = GetStdHandle(STD_OUTPUT_HANDLE); hOut != INVALID_HANDLE_VALUE) {
+        DWORD dwMode = 0;
+        if (GetConsoleMode(hOut, &dwMode)) {
+            dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+            SetConsoleMode(hOut, dwMode);
+        }
+    }
+#endif
+}
+
 int main(const int argc, char *argv[]) {
     bool debug = false;
     if (argc > 2 && argv[2] == std::string("debug"))
         debug = true;
-
+    init_terminal_encoding();
     if (argc > 1)
         return run_file(argv[1], debug);
     return run_repl(debug);

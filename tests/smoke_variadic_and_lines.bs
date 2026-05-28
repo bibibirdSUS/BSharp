@@ -1,0 +1,135 @@
+# =====================================================================
+# B# Smoke Test: Variadic Arguments, Indentation & Performance Benchmark
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# 測試項目 1: 基礎動態參數與空列表相容性
+# ---------------------------------------------------------------------
+fn test_basic_var(a, b...) do
+    return b
+
+assert(test_basic_var(1, 2, 3, 4) == [2, 3, 4])
+assert(test_basic_var(10) == [])
+
+
+# ---------------------------------------------------------------------
+# 測試項目 2: 單一動態參數函數（無固定參數）
+# ---------------------------------------------------------------------
+fn sum_all(numbers...) do
+    total = 0
+    for i = 0 ~ len(numbers) do
+        total = total + numbers[i]
+    return total
+
+assert(sum_all(1, 2, 3, 4, 5) == 15)
+assert(sum_all() == 0)
+
+
+# ---------------------------------------------------------------------
+# 測試項目 3: 函數定義端的 Trailing Comma 與摩根定律防線測試
+# ---------------------------------------------------------------------
+fn test_trailing(x, y...,) do
+    return y
+
+assert(test_trailing(1, 2, 3) == [2, 3])
+assert(test_trailing(1,) == [])
+
+
+# ---------------------------------------------------------------------
+# 測試項目 4: 跨行解析（Implicit Line Joining）大亂鬥
+# ---------------------------------------------------------------------
+my_list = [
+    1,
+    2,
+    3,
+]
+assert(my_list == [1, 2, 3])
+
+result = sum_all(
+    10,
+    20,
+    30
+)
+assert(result == 60)
+
+condition = true
+status = (if condition do
+    "Yes"
+else
+    "No")
+assert(status == "Yes")
+
+
+# ---------------------------------------------------------------------
+# 測試項目 5: 極端邊界情境（複雜大綜合）
+# ---------------------------------------------------------------------
+fn complex_calc(prefix, values...) do
+    if len(values) == 0 do
+        return prefix
+    else
+        return prefix + len(values)
+
+assert(complex_calc(100, 1, 2, 3, 4) == 104)
+assert(complex_calc(50) == 50)
+
+
+# ---------------------------------------------------------------------
+# 新增測試項目 6: List / String 的運算子基礎功能測試
+# ---------------------------------------------------------------------
+assert([1, 2] + [3, 4] == [1, 2, 3, 4])
+assert([1, 2] * 3 == [1, 2, 1, 2, 1, 2])
+assert("hello " + "world" == "hello world")
+assert("Abc" * 3 == "AbcAbcAbc")
+
+
+# ---------------------------------------------------------------------
+# 💡 核心壓軸：大數據量效能與壓力測試 (Benchmark)
+# ---------------------------------------------------------------------
+print("🚀 Starting B# Engine Performance Benchmark...")
+
+# === A. List 拼接效能測試 ===
+list_start = time()
+
+dyn_list = []
+for i = 0 ~ 1000 do
+    dyn_list = dyn_list + [i]
+
+list_end = time()
+list_duration = list_end - list_start
+
+assert(len(dyn_list) == 1000)
+print("  - List concatenation (1000 times) took: " + string(list_duration) + " ms")
+
+
+# === B. String 拼接效能測試 ===
+str_start = time()
+
+dyn_str = ""
+for i = 0 ~ 1000 do
+    dyn_str = dyn_str + "x"
+
+str_end = time()
+str_duration = str_end - str_start
+
+assert(len(dyn_str) == 1000)
+print("  - String concatenation (1000 times) took: " + string(str_duration) + " ms")
+
+
+# === C. 乘法重複運算子效能測試 ===
+mul_start = time()
+
+large_list = [1] * 5000
+large_str = "A" * 5000
+
+mul_end = time()
+mul_duration = mul_end - mul_start
+
+assert(len(large_list) == 5000)
+assert(len(large_str) == 5000)
+print("  - Multiplication Allocation (5000 units) took: " + string(mul_duration) + " ms")
+
+
+# =====================================================================
+# 終點彩蛋
+# =====================================================================
+print("🎉 All smoke tests and benchmarks passed successfully!")

@@ -1,0 +1,11 @@
+assert(bit_and(6, 3) == 2)
+assert(bit_or(4, 1) == 5)
+assert(bit_xor(6, 3) == 5)
+assert(bit_not(0) == -1)
+
+assert(lshift(3, 2) == 12)
+assert(rshift(16, 2) == 4)
+
+assert(bnot(0) == -1)
+
+print("builtin bitwise passed")

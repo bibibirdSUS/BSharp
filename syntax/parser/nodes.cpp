@@ -195,7 +195,7 @@ node_ptr subscript_node::copy() const {
     return std::make_unique<subscript_node>(left->copy(), index->copy(), span{where.start, where.end});
 }
 
-bs_obj_ptr subscript_assign_node::accept(interpreter &visitor, context_ptr ctx) {
+bs_obj_ptr subscript_assign_node::accept(interpreter &visitor, const context_ptr ctx) {
     return visitor.visit(*this, ctx);
 }
 

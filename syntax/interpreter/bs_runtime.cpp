@@ -46,7 +46,7 @@ bs_obj_ptr bs_runtime::get_number(double value) const {
     return std::make_shared<bs_number>(value);
 }
 
-bs_obj_ptr bs_runtime::get_function(const std::string &name, const std::vector<std::string> &params,
+bs_obj_ptr bs_runtime::get_function(const std::string &name, const std::vector<parameter> &params,
                                     const node_ptr &body,
                                     const context_ptr &closure) {
     return std::make_shared<bs_function>(name, params, body->copy(), closure);

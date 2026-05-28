@@ -29,7 +29,7 @@ bs_obj_ptr context::get(const std::string &name) const {
         return it->second;
     if (parent_)
         return parent_->get(name);
-    throw std::runtime_error("Undefined variable: '" + name + "'");
+    throw std::runtime_error("undefined variable '" + name + "'");
 }
 
 bool context::exists(const std::string &name) const {

@@ -10,6 +10,28 @@
 #include "../bs_objs/exception/bs_invalid_syntax_exception.h"
 #include "../bs_objs/null/bs_null.h"
 
+namespace {
+    std::string describe_token(const token &t) {
+        switch (t.type) {
+            case token_type::EOF_:
+                return "<end of file>";
+            case token_type::NEWLINE:
+                return "<newline>";
+            case token_type::INDENT:
+                return "<indent>";
+            case token_type::DEDENT:
+                return "<dedent>";
+            default:
+                if (t.literal.empty()) return "<empty token>";
+                return "'" + t.literal + "'";
+        }
+    }
+
+    std::string expected_message(const std::string &expected, const token &found) {
+        return "expected " + expected + ", but found " + describe_token(found);
+    }
+}
+
 
 parser::parser(std::vector<token> &&tokens, std::string source_code) : tokens_(std::move(tokens)), current_index_(0),
                                                                        source_code_(std::move(source_code)) {
@@ -74,7 +96,7 @@ node_ptr parser::statements() {
         else if (current().type == token_type::DEDENT || is_at_end() || previous().type == token_type::DEDENT) {
         } else
             throw bs_invalid_syntax_exception{
-                "Expected newline after statement, but found '" + current().literal + "'",
+                expected_message("newline after statement", current()),
                 source_code_, current().start,
                 current().end
             };
@@ -113,7 +135,7 @@ node_ptr parser::while_stmt() {
     node_ptr condition = expr();
     if (current().type != token_type::DO)
         throw bs_invalid_syntax_exception{
-            "Expected 'do', but found '" + current().literal + "'", source_code_, current().start, current().end
+            expected_message("'do'", current()), source_code_, current().start, current().end
         };
     advance();
     node_ptr body = block();
@@ -130,18 +152,18 @@ node_ptr parser::for_stmt() {
 
     if (current().type != token_type::IDENTIFIER)
         throw bs_invalid_syntax_exception{
-            "Expected identifier after 'for'", source_code_, current().start, current().end
+            expected_message("identifier after 'for'", current()), source_code_, current().start, current().end
         };
     const std::string var_name = current().literal;
     if (peek(1).type != token_type::EQUALS)
         throw bs_invalid_syntax_exception{
-            "Expected '=' after for variable", source_code_, current().start, current().end
+            expected_message("'=' after for loop variable", peek(1)), source_code_, peek(1).start, peek(1).end
         };
 
     node_ptr variable = assignment();
     if (current().type != token_type::TILDE)
         throw bs_invalid_syntax_exception{
-            "Expected '~' after for start value", source_code_, current().start, current().end
+            expected_message("'~' after for start value", current()), source_code_, current().start, current().end
         };
     advance();
     node_ptr end = expr();
@@ -152,7 +174,7 @@ node_ptr parser::for_stmt() {
     }
     if (current().type != token_type::DO)
         throw bs_invalid_syntax_exception{
-            "Expected 'do' before 'for' loop body, but found '" + current().literal + "'", source_code_,
+            expected_message("'do' before 'for' loop body", current()), source_code_,
             current().start,
             current().end
         };
@@ -170,7 +192,7 @@ node_ptr parser::if_stmt() {
     node_ptr condition = expr();
     if (current().type != token_type::DO)
         throw bs_invalid_syntax_exception{
-            "Expected 'do', but found '" + current().literal + "'", source_code_, current().start, current().end
+            expected_message("'do'", current()), source_code_, current().start, current().end
         };
     advance();
     node_ptr then_branch = block();
@@ -193,26 +215,46 @@ node_ptr parser::fn_stmt() {
     const position start_pos = advance().start;
     if (current().type != token_type::IDENTIFIER)
         throw bs_invalid_syntax_exception{
-            "Expected function name after 'fn', but found '" + current().literal + "'", source_code_, current().start,
+            expected_message("function name after 'fn'", current()), source_code_, current().start,
             current().end
         };
     const std::string name = advance().literal;
 
     if (current().type != token_type::LPARN)
         throw bs_invalid_syntax_exception{
-            "Expected '(', but found '" + current().literal + "'", source_code_, current().start, current().end
+            expected_message("'('", current()), source_code_, current().start, current().end
         };
     advance();
-    std::vector<std::string> params;
-    while (current().type == token_type::IDENTIFIER) {
-        params.push_back(advance().literal);
-        if (current().type != token_type::COMMA) break;
-        advance();
-    }
+    std::vector<parameter> params;
+
+    if (current().type != token_type::RPARN)
+        for (;;) {
+            if (current().type != token_type::IDENTIFIER)
+                throw bs_invalid_syntax_exception{
+                    expected_message("parameter name", current()), source_code_, current().start, current().end
+                };
+            const std::string var_name = advance().literal;
+            bool is_variadic = false;
+            if (current().type == token_type::ELLIPSIS) {
+                is_variadic = true;
+                advance();
+                if (const token_type next_type = current().type;
+                    (next_type != token_type::COMMA || peek(1).type != token_type::RPARN) && next_type !=
+                    token_type::RPARN)
+                    throw bs_invalid_syntax_exception{
+                        expected_message("')' after variadic parameter", current()),
+                        source_code_, current().start, current().end
+                    };
+            }
+            params.push_back(parameter{var_name, is_variadic});
+            if (current().type != token_type::COMMA) break;
+            advance();
+            if (current().type == token_type::RPARN) break;
+        }
 
     if (current().type != token_type::RPARN)
         throw bs_invalid_syntax_exception{
-            "Expected ')', but found '" + current().literal + "'", source_code_, current().start, current().end
+            expected_message("')'", current()), source_code_, current().start, current().end
         };
     advance();
     node_ptr body = nullptr;
@@ -227,7 +269,7 @@ node_ptr parser::fn_stmt() {
         body = block();
     } else
         throw bs_invalid_syntax_exception{
-            "Expected '=' or 'do', but found '" + current().literal + "'", source_code_, current().start,
+            expected_message("'=' or 'do'", current()), source_code_, current().start,
             current().end
         };
     const position end_pos = body->where.end;
@@ -261,14 +303,14 @@ node_ptr parser::block() {
         while (current().type == token_type::NEWLINE) advance();
         if (current().type != token_type::INDENT)
             throw bs_invalid_syntax_exception{
-                "Expected indentation after newline", source_code_, current().start,
+                expected_message("indentation after newline", current()), source_code_, current().start,
                 current().end
             };
         advance();
         node_ptr res = statements();
         if (current().type != token_type::DEDENT && !is_at_end())
             throw bs_invalid_syntax_exception{
-                "Expected dedent at the end of the block", source_code_, current().start,
+                expected_message("dedent at the end of the block", current()), source_code_, current().start,
                 current().end
             };
         if (current().type == token_type::DEDENT) advance();
@@ -313,7 +355,7 @@ node_ptr parser::assignment() {
             );
         }
 
-        throw bs_invalid_syntax_exception{"Invalid assignment target", source_code_, op.start, op.end};
+        throw bs_invalid_syntax_exception{"invalid assignment target", source_code_, op.start, op.end};
     }
     return left;
 }
@@ -405,7 +447,7 @@ node_ptr parser::postfix() {
 
             if (current().type != token_type::RPARN)
                 throw bs_invalid_syntax_exception{
-                    "Expected ')', but found '" + current().literal + "'", source_code_, current().start,
+                    expected_message("')'", current()), source_code_, current().start,
                     current().end
                 };
             end_pos = advance().end;
@@ -417,7 +459,7 @@ node_ptr parser::postfix() {
             node_ptr index = expr();
             if (current().type != token_type::RBRACKET)
                 throw bs_invalid_syntax_exception{
-                    "Expected ']', but found '" + current().literal + "'", source_code_, current().start,
+                    expected_message("']'", current()), source_code_, current().start,
                     current().end
                 };
             end_pos = advance().end;
@@ -443,7 +485,7 @@ node_ptr parser::primary() {
         node_ptr expression = expr();
         if (current().type != token_type::RPARN)
             throw bs_invalid_syntax_exception{
-                "Expected ')' but found '" + current().literal + "'",
+                expected_message("')'", current()),
                 source_code_, current().start,
                 current().end
             };
@@ -480,7 +522,7 @@ node_ptr parser::primary() {
 
 
     throw bs_invalid_syntax_exception{
-        "Expected '(', identifier, or literal, but found '" + current().literal + "'",
+        expected_message("an expression", current()),
         source_code_, current().start,
         current().end
     };
@@ -500,7 +542,7 @@ node_ptr parser::list_literal() {
 
     if (current().type != token_type::RBRACKET)
         throw bs_invalid_syntax_exception{
-            "Expected ']', but found '" + current().literal + "'", source_code_, current().start, current().end
+            expected_message("']'", current()), source_code_, current().start, current().end
         };
     const position end_pos = advance().end;
     return std::make_unique<list_literal_node>(std::move(args), span{start_pos, end_pos});
@@ -511,7 +553,7 @@ node_ptr parser::ternary() {
     node_ptr condition = expr();
     if (current().type != token_type::DO)
         throw bs_invalid_syntax_exception{
-            "Expected 'do', but found '" + current().literal + "'", source_code_, current().start, current().end
+            expected_message("'do'", current()), source_code_, current().start, current().end
         };
 
     advance();
@@ -519,7 +561,7 @@ node_ptr parser::ternary() {
     node_ptr then_branch = expr();
     if (current().type != token_type::ELSE)
         throw bs_invalid_syntax_exception{
-            "Expected 'else' in if expression, but found '" + current().literal + "'",
+            expected_message("'else' in if expression", current()),
             source_code_, current().start, current().end
         };
     advance();

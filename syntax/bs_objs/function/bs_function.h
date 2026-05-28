@@ -17,7 +17,7 @@ class bs_function : public bs_obj {
 public:
     typedef context::context_ptr context_ptr;
 
-    bs_function(std::string name, std::vector<std::string> params, node_ptr body, context_ptr closure)
+    bs_function(std::string name, std::vector<parameter> params, node_ptr body, context_ptr closure)
         : name_(std::move(name)),
           params_(std::move(params)),
           body_(std::move(body)),
@@ -30,9 +30,13 @@ public:
 
     [[nodiscard]] bs_obj_ptr call(interpreter &visitor, const std::vector<bs_obj_ptr> &args) const override;
 
+    bool is_variadic() const {
+        return !params_.empty() && params_.back().is_variadic;
+    }
+
 private:
     std::string name_;
-    std::vector<std::string> params_;
+    std::vector<parameter> params_;
     node_ptr body_;
     context_ptr closure_;
 };

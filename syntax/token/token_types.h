@@ -57,7 +57,8 @@ enum class token_type {
     BREAK,
     CONTINUE,
     RBRACKET,
-    LBRACKET
+    LBRACKET,
+    ELLIPSIS
 };
 
 #endif //BSHARP_TOKEN_TYPES_H

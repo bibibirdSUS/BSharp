@@ -11,7 +11,7 @@
 class bs_illegal_character_exception final : public bs_exception {
 public:
     bs_illegal_character_exception(const char c, std::string source_code, position start, position end) : bs_exception(
-        "Illegal character '" + std::string(1, c) + "'", std::move(source_code), std::move(start), std::move(end)) {
+        "illegal character '" + std::string(1, c) + "'", std::move(source_code), std::move(start), std::move(end)) {
     }
 
     [[nodiscard]] std::string type_name() const override {

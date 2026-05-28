@@ -52,7 +52,7 @@ bs_obj::bs_obj_ptr bs_number::mul(interpreter &visitor, const bs_obj_ptr &rhs) c
 bs_obj::bs_obj_ptr bs_number::div(interpreter &visitor, const bs_obj_ptr &rhs) const {
     const bs_number *rhs_casted = as_number(rhs);
     if (!rhs_casted) return bs_obj::div(visitor, rhs);
-    if (rhs_casted->value_ == 0) throw std::runtime_error{"Division by zero"};
+    if (rhs_casted->value_ == 0) throw std::runtime_error{"division by zero"};
     return visitor.get_runtime().get_number(value_ / rhs_casted->value_);
 }
 
@@ -62,7 +62,7 @@ bs_obj::bs_obj_ptr bs_number::pow(interpreter &visitor, const bs_obj_ptr &rhs) c
     const double r = std::pow(value_, rhs_casted->value_);
     if (std::isnan(r) || std::isinf(r))
         throw std::runtime_error{
-            "Power of number too large or no definition in real numbers"
+            "power result is too large or not defined in real numbers"
         };
     return visitor.get_runtime().get_number(r);
 }
@@ -70,21 +70,21 @@ bs_obj::bs_obj_ptr bs_number::pow(interpreter &visitor, const bs_obj_ptr &rhs) c
 bs_obj::bs_obj_ptr bs_number::mod(interpreter &visitor, const bs_obj_ptr &rhs) const {
     const bs_number *rhs_casted = as_number(rhs);
     if (!rhs_casted) return bs_obj::mod(visitor, rhs);
-    if (rhs_casted->value_ == 0) throw std::runtime_error{"Division by zero"};
+    if (rhs_casted->value_ == 0) throw std::runtime_error{"division by zero"};
     if (!(std::abs(value_ - std::round(value_)) < eps) || !(
             std::abs(rhs_casted->value_ - std::round(rhs_casted->value_)) < eps))
-        throw std::runtime_error{"Modulo of non-integer number is not defined"};
+        throw std::runtime_error{"modulo requires integer operands"};
     return visitor.get_runtime().get_number(static_cast<int>(value_) % static_cast<int>(rhs_casted->value_));
 }
 
 bs_obj::bs_obj_ptr bs_number::fact(interpreter &visitor) const {
-    if (!std::isfinite(value_)) throw std::runtime_error{"Factorial of infinite number is not defined"};
+    if (!std::isfinite(value_)) throw std::runtime_error{"factorial is not defined for infinite values"};
     if (value_ < 0 && std::abs(value_ - std::round(value_)) < eps)
         throw std::runtime_error{
-            "Factorial of negative integer is not defined"
+            "factorial is not defined for negative integers"
         };
     const double r = factorial(value_);
-    if (!std::isfinite(r)) throw std::runtime_error{"Factorial of number too large"};
+    if (!std::isfinite(r)) throw std::runtime_error{"factorial result is too large"};
     return visitor.get_runtime().get_number(r);
 }
 

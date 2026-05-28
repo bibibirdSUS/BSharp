@@ -19,6 +19,12 @@ struct span {
     position end;
 };
 
+struct parameter {
+    std::string name;
+    bool is_variadic;
+    std::string type = "Any"; // will be used in the future
+};
+
 class interpreter;
 class bs_obj;
 class context;
@@ -224,16 +230,20 @@ struct for_node final : node {
 
 struct fn_node final : node {
     std::string name;
-    std::vector<std::string> params;
+    std::vector<parameter> params;
     node_ptr body;
 
-    fn_node(std::string name, std::vector<std::string> params, node_ptr body, span where) : node(std::move(where)),
+    fn_node(std::string name, std::vector<parameter> params, node_ptr body, span where) : node(std::move(where)),
         name(std::move(name)), params(std::move(params)), body(std::move(body)) {
     }
 
     bs_obj_ptr accept(interpreter &visitor, context_ptr ctx) override;
 
     [[nodiscard]] node_ptr copy() const override;
+
+    [[nodiscard]] bool has_variadic() const {
+        return !params.empty() && params.back().is_variadic;
+    }
 };
 
 struct call_node final : node {
