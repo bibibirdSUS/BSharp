@@ -23,25 +23,18 @@
                 <nav>
                     <ul>
                         <li>
-                            <a href="#intro"
-                                ><i class="fas fa-home"></i> 簡介</a
+                            <a href="index.html" class="active"
+                                ><i class="fas fa-home"></i> 首頁</a
                             >
                         </li>
                         <li>
-                            <a href="#data-types"
-                                ><i class="fas fa-cube"></i> 資料類型</a
+                            <a href="builtins.html"
+                                ><i class="fas fa-box-open"></i> 內建函式</a
                             >
                         </li>
-                        <li>
-                            <a href="#operators"
-                                ><i class="fas fa-calculator"></i> 運算子</a
-                            >
-                        </li>
-                        <li>
-                            <a href="#variables"
-                                ><i class="fas fa-terminal"></i> 變數與賦值</a
-                            >
-                        </li>
+                    </ul>
+                    <div class="sidebar-section">主要內容</div>
+                    <ul>
                         <li>
                             <a href="#control-flow"
                                 ><i class="fas fa-code-branch"></i> 控制流
@@ -64,18 +57,19 @@
                             >
                         </li>
                         <li>
+                            <a href="#slicing"
+                                ><i class="fas fa-scissors"></i> 切片
+                                (Slicing)</a
+                            >
+                        </li>
+                        <li>
                             <a href="#chaining"
                                 ><i class="fas fa-link"></i> 鏈式呼叫</a
                             >
                         </li>
                         <li>
-                            <a href="#builtins"
-                                ><i class="fas fa-box-open"></i> 內建函式</a
-                            >
-                        </li>
-                        <li>
                             <a href="#scoping"
-                                ><i class="fas fa-layer-group"></i> 作用域
+                                ><i class="fas fa-microscope"></i> 作用域
                                 (Scoping)</a
                             >
                         </li>
@@ -377,6 +371,34 @@ print("Hello" + " " + "World") # 拼接
 print("Hi" * 3)                # 重複: "HiHiHi"</code></pre>
                 </section>
 
+                <section id="slicing">
+                    <h2>切片 (Slicing)</h2>
+                    <p>
+                        BSharp 支援強大的切片語法，適用於列表與字串。語法格式為
+                        <code>[start~end:step]</code>。
+                    </p>
+                    <pre><code class="language-bsharp">a = [0, 1, 2, 3, 4]
+
+# 基礎切片 (左閉右開)
+print(a[0~3])    # [0, 1, 2]
+
+# 省略參數
+print(a[~3])     # [0, 1, 2] (預設 start=0)
+print(a[3~])     # [3, 4]    (預設 end=length)
+print(a[~])      # [0, 1, 2, 3, 4] (複製整個列表)
+
+# 步長 (Step)
+print(a[0~5:2])  # [0, 2, 4]
+
+# 負步長 (反轉)
+print(a[~:-1])   # [4, 3, 2, 1, 0] (快速反轉)</code></pre>
+
+                    <div class="note">
+                        <strong>UTF-8 支援</strong>:
+                        字串切片能正確處理多位元組字元（如中文），不會產生亂碼。
+                    </div>
+                </section>
+
                 <section id="chaining">
                     <h2>鏈式呼叫 (Chaining)</h2>
                     <p>
@@ -397,58 +419,6 @@ print(get_list()[0])    # 輸出 10
 # 下標結果直接進行呼叫
 funcs = [get_adder(10)]
 print(funcs[0](20))     # 輸出 30</code></pre>
-                </section>
-
-                <section id="builtins">
-                    <h2>內建函式</h2>
-                    <p>BSharp 提供了一些內建函式來協助開發：</p>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>函式</th>
-                                <th>說明</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><code>print(args...)</code></td>
-                                <td>將參數輸出至控制台。</td>
-                            </tr>
-                            <tr>
-                                <td><code>input(prompt?)</code></td>
-                                <td>
-                                    從控制台讀取一行輸入。可選提供提示字串。
-                                </td>
-                            </tr>
-                            <tr>
-                                <td><code>type(obj)</code></td>
-                                <td>
-                                    返回物件的類型名稱字串（如 "Number",
-                                    "String"）。
-                                </td>
-                            </tr>
-                            <tr>
-                                <td><code>assert(cond)</code></td>
-                                <td>斷言條件為真，若為假則拋出錯誤。</td>
-                            </tr>
-                            <tr>
-                                <td><code>time()</code></td>
-                                <td>返回當前系統時間的毫秒數 (Number)。</td>
-                            </tr>
-                            <tr>
-                                <td><code>int(val)</code></td>
-                                <td>將字串或數字轉為整數。</td>
-                            </tr>
-                            <tr>
-                                <td><code>number(val)</code></td>
-                                <td>將字串轉為數字 (Float)。</td>
-                            </tr>
-                            <tr>
-                                <td><code>string(val)</code></td>
-                                <td>將任何物件轉為其字串表示。</td>
-                            </tr>
-                        </tbody>
-                    </table>
                 </section>
 
                 <section id="scoping">

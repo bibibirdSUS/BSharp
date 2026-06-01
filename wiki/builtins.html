@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="zh-TW">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>BSharp Wiki - 內建函式</title>
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+        />
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css"
+        />
+        <link rel="stylesheet" href="style.css" />
+    </head>
+    <body>
+        <div class="container">
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    <div class="logo">B#</div>
+                    <h1>BSharp Wiki</h1>
+                </div>
+                <nav>
+                    <ul>
+                        <li>
+                            <a href="index.html"
+                                ><i class="fas fa-home"></i> 首頁</a
+                            >
+                        </li>
+                        <li>
+                            <a href="builtins.html" class="active"
+                                ><i class="fas fa-box-open"></i> 內建函式</a
+                            >
+                        </li>
+                    </ul>
+                    <div class="sidebar-section">快速導覽</div>
+                    <ul>
+                        <li>
+                            <a href="#io"><i class="fas fa-print"></i> I/O</a>
+                        </li>
+                        <li>
+                            <a href="#conversion"
+                                ><i class="fas fa-arrows-rotate"></i>
+                                類型與轉換</a
+                            >
+                        </li>
+                        <li>
+                            <a href="#bitwise"
+                                ><i class="fas fa-binary"></i> 位元運算</a
+                            >
+                        </li>
+                        <li>
+                            <a href="#system"
+                                ><i class="fas fa-microchip"></i>
+                                系統與記憶體</a
+                            >
+                        </li>
+                    </ul>
+                </nav>
+            </aside>
+
+            <main class="content">
+                <section id="intro">
+                    <h1>內建函式 (Built-in Functions)</h1>
+                    <p>
+                        以下是目前 BSharp
+                        已實作的內建函式清單。這些函式在全域作用域中均可直接使用。
+                    </p>
+                </section>
+
+                <section id="io">
+                    <h2>輸入與輸出 (I/O)</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>函式</th>
+                                <th>說明</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>print(args...)</code></td>
+                                <td>
+                                    將參數輸出至控制台（以空格分隔）並換行。
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>input(prompt?)</code></td>
+                                <td>顯示提示字串並從讀取一行輸入。</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <section id="conversion">
+                    <h2>類型轉換與檢查</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>函式</th>
+                                <th>說明</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>type(obj)</code></td>
+                                <td>
+                                    返回物件的類型名稱字串（如 "Number",
+                                    "String"）。
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>int(val)</code></td>
+                                <td>將數字或字串轉為整數。</td>
+                            </tr>
+                            <tr>
+                                <td><code>number(val)</code></td>
+                                <td>將字串轉為數字（浮點數）。</td>
+                            </tr>
+                            <tr>
+                                <td><code>string(val)</code></td>
+                                <td>將物件轉為其字串表示。</td>
+                            </tr>
+                            <tr>
+                                <td><code>len(obj)</code></td>
+                                <td>返回字串或列表的長度。</td>
+                            </tr>
+                            <tr>
+                                <td><code>hash(obj)</code></td>
+                                <td>返回物件的雜湊值（Number）。</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <section id="bitwise">
+                    <h2>位元運算 (Bitwise)</h2>
+                    <p>在位元運算子正式加入語法前，可使用以下函式進行運算：</p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>函式</th>
+                                <th>說明</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>bit_and(a, b)</code></td>
+                                <td>按位元與 (AND)。</td>
+                            </tr>
+                            <tr>
+                                <td><code>bit_or(a, b)</code></td>
+                                <td>按位元或 (OR)。</td>
+                            </tr>
+                            <tr>
+                                <td><code>bit_xor(a, b)</code></td>
+                                <td>按位元異或 (XOR)。</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <code>bit_not(n)</code> /
+                                    <code>bnot(n)</code>
+                                </td>
+                                <td>按位元取反 (NOT)。</td>
+                            </tr>
+                            <tr>
+                                <td><code>lshift(n, bits)</code></td>
+                                <td>左移位運算。</td>
+                            </tr>
+                            <tr>
+                                <td><code>rshift(n, bits)</code></td>
+                                <td>右移位運算。</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <section id="system">
+                    <h2>系統與記憶體</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>函式</th>
+                                <th>說明</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>time()</code></td>
+                                <td>返回系統當前時間（毫秒）。</td>
+                            </tr>
+                            <tr>
+                                <td><code>assert(cond...)</code></td>
+                                <td>斷言一或多個條件為真，否則拋出錯誤。</td>
+                            </tr>
+                            <tr>
+                                <td><code>memory(obj)</code></td>
+                                <td>返回物件在記憶體中的十六進制位址。</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+            </main>
+        </div>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+        <script src="script.js"></script>
+    </body>
+</html>
