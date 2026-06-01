@@ -1,0 +1,7 @@
+assert(hash("abc") == hash("abc"))
+assert(hash(true) == hash(true))
+assert(hash(false) == hash(false))
+assert(hash(null) == hash(null))
+assert(hash([1, "a", true]) == hash([1, "a", true]))
+
+print("hash builtin passed")
