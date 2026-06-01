@@ -1,5 +1,5 @@
 //
-// Created by bibib on 2026/4/5.
+// Created by bibibird on 2026/4/5.
 //
 
 #ifndef BSHARP_BS_STRING_H
@@ -27,7 +27,11 @@ public:
 
     [[nodiscard]] bs_obj_ptr subscript(interpreter &visitor, const bs_obj_ptr &index) const override;
 
+    [[nodiscard]] bs_obj_ptr slice(interpreter &visitor, int start, int end, int step) const override;
+
     [[nodiscard]] size_t len() const override;
+
+    [[nodiscard]] size_t hash() const override;
 
 private:
     std::string str_;

@@ -1,16 +1,32 @@
 //
-// Created by bibib on 2026/3/1.
+// Created by bibibird on 2026/3/1.
 //
 
 #include "interpreter.h"
 
 #include <iostream>
+#include <limits>
 
 #include "context.h"
 #include "signals.h"
 #include "../bs_objs/exception/bs_runtime_exception.h"
 #include "../bs_objs/number/bs_number.h"
 #include "../bs_objs/function/bs_function.h"
+
+namespace {
+    const bs_number *expect_slice_number(const bs_obj_ptr &value, const std::string &name) {
+        if (const auto number = dynamic_cast<const bs_number *>(value.get()))
+            return number;
+        throw std::runtime_error{"slice " + name + " must be a number, got " + value->type_name()};
+    }
+
+    int expect_slice_integer(const bs_obj_ptr &value, const std::string &name) {
+        const auto number = expect_slice_number(value, name);
+        if (!bs_number::is_int(number->value()))
+            throw std::runtime_error{"slice " + name + " must be an integer, got " + number->to_string()};
+        return static_cast<int>(number->value());
+    }
+}
 
 interpreter::interpreter(node_ptr root, std::string source_code, context_ptr global_context) : source_code_(
         std::move(source_code)),
@@ -366,4 +382,56 @@ bs_obj_ptr interpreter::visit(const subscript_assign_node &n, const context_ptr 
             throw std::runtime_error{"internal error: unknown subscript assignment operator"};
     }
     return value;
+}
+
+bs_obj_ptr interpreter::visit(const slice_node &n, const context_ptr &ctx) {
+    const bs_obj_ptr target_val = eval(n.left.get(), ctx);
+    if (!target_val)
+        throw std::runtime_error{"cannot slice null object"};
+
+    const size_t target_length = target_val->len();
+    if (target_length > static_cast<size_t>(std::numeric_limits<int>::max()))
+        throw std::runtime_error{"slice target is too large"};
+    const int length = static_cast<int>(target_length);
+
+    const bs_obj_ptr start_ptr = n.start ? eval(n.start.get(), ctx) : nullptr;
+    const bs_obj_ptr end_ptr = n.end ? eval(n.end.get(), ctx) : nullptr;
+    const bs_obj_ptr step_ptr = n.step ? eval(n.step.get(), ctx) : nullptr;
+
+    int actual_step = 1;
+    if (step_ptr)
+        actual_step = expect_slice_integer(step_ptr, "step");
+
+    if (actual_step == 0)
+        throw std::runtime_error{"slice step cannot be zero"};
+
+    int actual_start = 0;
+    int actual_end = 0;
+
+    if (actual_step > 0) {
+        actual_start = start_ptr ? expect_slice_integer(start_ptr, "start") : 0;
+        actual_end = end_ptr ? expect_slice_integer(end_ptr, "end") : length;
+    } else {
+        actual_start = start_ptr ? expect_slice_integer(start_ptr, "start") : length - 1;
+        actual_end = end_ptr ? expect_slice_integer(end_ptr, "end") : -1;
+    }
+
+    if (actual_start < 0) actual_start += length;
+    if (actual_end < 0 && (actual_step > 0 || end_ptr))
+        actual_end += length;
+
+
+    if (actual_step > 0) {
+        if (actual_start < 0) actual_start = 0;
+        if (actual_start > length) actual_start = length;
+        if (actual_end < 0) actual_end = 0;
+        if (actual_end > length) actual_end = length;
+    } else {
+        if (actual_start < -1) actual_start = -1;
+        if (actual_start >= length) actual_start = length - 1;
+        if (actual_end < -1) actual_end = -1;
+        if (actual_end >= length) actual_end = length;
+    }
+
+    return target_val->slice(*this, actual_start, actual_end, actual_step);
 }

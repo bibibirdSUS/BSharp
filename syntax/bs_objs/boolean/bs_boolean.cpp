@@ -1,8 +1,10 @@
 //
-// Created by bibib on 2026/3/7.
+// Created by bibibird on 2026/3/7.
 //
 
 #include "bs_boolean.h"
+
+#include <functional>
 
 #include "../../interpreter/interpreter.h"
 
@@ -34,4 +36,8 @@ bs_obj::bs_obj_ptr bs_boolean::eq(interpreter &visitor, const bs_obj_ptr &rhs) c
     const bs_boolean *rhs_casted = as_boolean(rhs);
     if (!rhs_casted) return visitor.get_runtime().false_obj();
     return value_ == rhs_casted->value_ ? visitor.get_runtime().true_obj() : visitor.get_runtime().false_obj();
+}
+
+size_t bs_boolean::hash() const {
+    return std::hash<bool>{}(value_);
 }

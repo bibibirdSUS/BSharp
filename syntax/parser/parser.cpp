@@ -1,5 +1,5 @@
 //
-// Created by bibib on 2026/3/1.
+// Created by bibibird on 2026/3/1.
 //
 
 #include "parser.h"
@@ -452,20 +452,47 @@ node_ptr parser::postfix() {
                 };
             end_pos = advance().end;
 
-            expr_node = std::make_unique<
-                call_node>(std::move(expr_node), std::move(args), span{start_pos, end_pos});
+            expr_node = std::make_unique<call_node>(std::move(expr_node), std::move(args), span{start_pos, end_pos});
         } else if (current().type == token_type::LBRACKET) {
-            advance();
-            node_ptr index = expr();
-            if (current().type != token_type::RBRACKET)
-                throw bs_invalid_syntax_exception{
-                    expected_message("']'", current()), source_code_, current().start,
-                    current().end
-                };
-            end_pos = advance().end;
+            node_ptr start = nullptr;
+            node_ptr end = nullptr;
+            node_ptr step = nullptr;
 
-            expr_node = std::make_unique<subscript_node>(std::move(expr_node), std::move(index),
-                                                         span{start_pos, end_pos});
+            advance();
+
+            if (current().type != token_type::TILDE)
+                start = expr();
+
+            if (current().type == token_type::RBRACKET) {
+                if (!start)
+                    throw bs_invalid_syntax_exception{
+                        expected_message("an expression", current()), source_code_, current().start, current().end
+                    };
+                end_pos = advance().end;
+                expr_node = std::make_unique<subscript_node>(std::move(expr_node), std::move(start),
+                                                             span{start_pos, end_pos});
+            } else if (current().type == token_type::TILDE) {
+                advance();
+                if (current().type != token_type::COLON && current().type != token_type::RBRACKET)
+                    end = expr();
+                if (current().type == token_type::COLON) {
+                    advance();
+                    if (current().type == token_type::RBRACKET)
+                        throw bs_invalid_syntax_exception{
+                            expected_message("step", current()), source_code_, current().start, current().end
+                        };
+                    step = expr();
+                }
+
+                if (current().type != token_type::RBRACKET)
+                    throw bs_invalid_syntax_exception{
+                        expected_message("']'", current()), source_code_, current().start, current().end
+                    };
+                end_pos = advance().end;
+
+                expr_node = std::make_unique<slice_node>(std::move(expr_node), std::move(start), std::move(end),
+                                                         std::move(step), span{start_pos, end_pos});
+            }
         } else if (current().type == token_type::FACTORIAL) {
             const token &t = advance();
             expr_node = std::make_unique<factorial_node>(std::move(expr_node), t);

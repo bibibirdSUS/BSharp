@@ -1,5 +1,5 @@
 //
-// Created by bibib on 2026/5/18.
+// Created by bibibird on 2026/5/18.
 //
 
 #ifndef BSHARP_BUILTINS_H
@@ -7,9 +7,16 @@
 
 #include <functional>
 #include <chrono>
+#include <cctype>
+#include <cmath>
+#include <cstdint>
+#include <format>
 #include <iostream>
+#include <limits>
+#include <string>
 
 #include "bs_builtin_function.h"
+#include "../../utils.h"
 
 
 typedef std::function<bs_obj_ptr(interpreter &, const std::vector<bs_obj_ptr> &)> native_fn;
@@ -20,16 +27,37 @@ namespace {
         global_ctx->define(name, std::make_shared<bs_builtin_function>(name, func));
     }
 
-    std::string argument_word(const size_t count) {
-        return count == 1 ? "argument" : "arguments";
-    }
-
     void expect_arity(const std::string &name, const size_t actual, const size_t expected) {
         if (actual != expected)
             throw std::runtime_error{
                 name + "() expects " + std::to_string(expected) + " " + argument_word(expected) +
                 ", but got " + std::to_string(actual)
             };
+    }
+
+    bool is_supported_numeric_source(const bs_obj_ptr &obj) {
+        return obj->type_name() == "String" || obj->type_name() == "Number";
+    }
+
+    void ensure_numeric_source(const std::string &name, const bs_obj_ptr &obj, const std::string &target_type) {
+        if (!is_supported_numeric_source(obj))
+            throw std::runtime_error{
+                name + "() cannot convert " + obj->type_name() + " to " + target_type
+            };
+    }
+
+    void ensure_only_trailing_spaces(const std::string &name, const std::string &value, size_t index,
+                                     const std::string &target_type) {
+        while (index < value.size()) {
+            if (!std::isspace(static_cast<unsigned char>(value[index])))
+                throw std::runtime_error{name + "() cannot convert '" + value + "' to " + target_type};
+            index++;
+        }
+    }
+
+    double hash_to_number(const size_t hash) {
+        static constexpr size_t max_safe_integer = (1ULL << 53) - 1;
+        return static_cast<double>(hash & max_safe_integer);
     }
 
     void expect_arity_range(const std::string &name, const size_t actual, const size_t min, const size_t max) {
@@ -121,8 +149,8 @@ static void register_all(const std::shared_ptr<context> &global_ctx) {
     });
 
     register_fn(global_ctx, "assert", [](interpreter &visitor, arg &args) {
-        for (auto &bools: args)
-            if (!bools->to_boolean())
+        for (const auto &condition: args)
+            if (!condition->to_boolean())
                 throw std::runtime_error{"assertion failed"};
         return visitor.get_runtime().null_obj();
     });
@@ -144,29 +172,40 @@ static void register_all(const std::shared_ptr<context> &global_ctx) {
 
     register_fn(global_ctx, "int", [](interpreter &visitor, arg &args) {
         expect_arity("int", args.size(), 1);
-        if (args[0]->type_name() != "String" && args[0]->type_name() != "Number")
-            throw std::runtime_error{"cannot convert " + args[0]->type_name() + " to Integer"};
+        ensure_numeric_source("int", args[0], "Integer");
+        const std::string value = args[0]->to_string();
+        size_t index = 0;
         try {
-            return visitor.get_runtime().get_number(std::stoi(args[0]->to_string()));
+            const long long converted = std::stoll(value, &index);
+            ensure_only_trailing_spaces("int", value, index, "Integer");
+            return visitor.get_runtime().get_number(static_cast<double>(converted));
         } catch (const std::exception &) {
-            throw std::runtime_error{"cannot convert '" + args[0]->to_string() + "' to Integer"};
+            throw std::runtime_error{"int() cannot convert '" + value + "' to Integer"};
         }
     });
 
     register_fn(global_ctx, "number", [](interpreter &visitor, arg &args) {
         expect_arity("number", args.size(), 1);
-        if (args[0]->type_name() != "String" && args[0]->type_name() != "Number")
-            throw std::runtime_error{"cannot convert " + args[0]->type_name() + " to Number"};
+        ensure_numeric_source("number", args[0], "Number");
+        size_t index = 0;
+        const std::string value = args[0]->to_string();
         try {
-            return visitor.get_runtime().get_number(std::stod(args[0]->to_string()));
+            const double converted = std::stod(value, &index);
+            ensure_only_trailing_spaces("number", value, index, "Number");
+            return visitor.get_runtime().get_number(converted);
         } catch (const std::exception &) {
-            throw std::runtime_error{"cannot convert '" + args[0]->to_string() + "' to Number"};
+            throw std::runtime_error{"number() cannot convert '" + value + "' to Number"};
         }
     });
 
     register_fn(global_ctx, "len", [](interpreter &visitor, arg &args) {
         expect_arity("len", args.size(), 1);
         return visitor.get_runtime().get_number(static_cast<double>(args[0]->len()));
+    });
+
+    register_fn(global_ctx, "hash", [](interpreter &visitor, arg &args) {
+        expect_arity("hash", args.size(), 1);
+        return visitor.get_runtime().get_number(hash_to_number(args[0]->hash()));
     });
 
     // Bitwise helpers until bitwise operators become syntax.
@@ -194,6 +233,11 @@ static void register_all(const std::shared_ptr<context> &global_ctx) {
         const int64_t value = expect_integer_arg("rshift", args, 0);
         const int shift = expect_shift_arg("rshift", args, 1);
         return visitor.get_runtime().get_number(static_cast<double>(value >> shift));
+    });
+
+    register_fn(global_ctx, "memory", [](interpreter &visitor, arg &args) {
+        expect_arity("memory", args.size(), 1);
+        return visitor.get_runtime().get_string(std::format("{:#x}", reinterpret_cast<std::uintptr_t>(args[0].get())));
     });
 }
 

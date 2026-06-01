@@ -1,5 +1,5 @@
 //
-// Created by bibib on 2026/3/7.
+// Created by bibibird on 2026/3/7.
 //
 
 #include "bs_null.h"
@@ -18,4 +18,8 @@ std::string bs_null::type_name() const {
 
 bool bs_null::to_boolean() const {
     return false;
+}
+
+size_t bs_null::hash() const {
+    return 0x4f1bbcdc;
 }

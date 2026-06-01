@@ -1,5 +1,5 @@
 //
-// Created by bibib on 2026/3/1.
+// Created by bibibird on 2026/3/1.
 //
 
 #ifndef BSHARP_NODES_H
@@ -333,6 +333,21 @@ struct subscript_assign_node final : node {
     subscript_assign_node(node_ptr left, node_ptr index, const token_type op, node_ptr value,
                           span where) : node(std::move(where)), left(std::move(left)), index(std::move(index)),
                                         value(std::move(value)), op(op) {
+    }
+
+    bs_obj_ptr accept(interpreter &visitor, context_ptr ctx) override;
+
+    [[nodiscard]] node_ptr copy() const override;
+};
+
+struct slice_node final : node {
+    node_ptr left;
+    node_ptr start;
+    node_ptr end;
+    node_ptr step;
+
+    slice_node(node_ptr left, node_ptr start, node_ptr end, node_ptr step, span where) : node(std::move(where)),
+        left(std::move(left)), start(std::move(start)), end(std::move(end)), step(std::move(step)) {
     }
 
     bs_obj_ptr accept(interpreter &visitor, context_ptr ctx) override;

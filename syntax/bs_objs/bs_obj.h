@@ -1,5 +1,5 @@
 //
-// Created by bibib on 2026/2/28.
+// Created by bibibird on 2026/2/28.
 //
 
 #ifndef BSHARP_BS_OBJ_H
@@ -7,6 +7,9 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <format>
+#include <cstdint>
+#include <functional>
 
 
 class interpreter;
@@ -23,7 +26,7 @@ public:
     [[nodiscard]] virtual std::string type_name() const = 0;
 
     [[nodiscard]] virtual std::string to_string() const {
-        return "<" + type_name() + ">";
+        return "<" + type_name() + " at " + std::format("{:#x}", reinterpret_cast<std::uintptr_t>(this)) + ">";
     }
 
     [[nodiscard]] virtual bool to_boolean() const {
@@ -106,6 +109,21 @@ public:
 
     [[nodiscard]] virtual size_t len() const {
         throw std::runtime_error{type_name() + " does not support len()"};
+    }
+
+    [[nodiscard]] virtual size_t hash() const {
+        return std::hash<const bs_obj *>{}(this);
+    }
+
+    [[nodiscard]] virtual bs_obj_ptr slice(interpreter &visitor, int start, int end, int step) const {
+        throw std::runtime_error{type_name() + " does not support slicing"};
+    }
+
+    //for c++
+    [[nodiscard]] virtual bool equals(interpreter &visitor, const bs_obj_ptr &rhs) {
+        if (!rhs) return false;
+        if (this == rhs.get()) return true;
+        return eq(visitor, rhs)->to_boolean();
     }
 };
 

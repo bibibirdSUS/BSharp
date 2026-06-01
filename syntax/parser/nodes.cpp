@@ -111,7 +111,8 @@ bs_obj_ptr if_node::accept(interpreter &visitor, const context_ptr ctx) {
 
 node_ptr if_node::copy() const {
     return std::make_unique<if_node>(condition->copy(), then_branch->copy(),
-                                     else_branch ? else_branch->copy() : nullptr, span{where.start, where.end}, is_stmt);
+                                     else_branch ? else_branch->copy() : nullptr, span{where.start, where.end},
+                                     is_stmt);
 }
 
 bs_obj_ptr while_node::accept(interpreter &visitor, const context_ptr ctx) {
@@ -202,4 +203,12 @@ bs_obj_ptr subscript_assign_node::accept(interpreter &visitor, const context_ptr
 node_ptr subscript_assign_node::copy() const {
     return std::make_unique<subscript_assign_node>(left->copy(), index->copy(), op, value->copy(),
                                                    span{where.start, where.end});
+}
+
+bs_obj_ptr slice_node::accept(interpreter &visitor, context_ptr ctx) {
+    return visitor.visit(*this, ctx);
+}
+
+node_ptr slice_node::copy() const {
+    return std::make_unique<slice_node>(left->copy(), start->copy(), end->copy(), step->copy(), span{where.start, where.end});
 }

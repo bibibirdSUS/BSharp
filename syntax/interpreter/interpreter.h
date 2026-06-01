@@ -1,5 +1,5 @@
 //
-// Created by bibib on 2026/3/1.
+// Created by bibibird on 2026/3/1.
 //
 
 #ifndef BSHARP_INTERPRETER_H
@@ -68,6 +68,8 @@ public:
     bs_obj_ptr visit(const subscript_node &n, const context_ptr &ctx);
 
     bs_obj_ptr visit(const subscript_assign_node &n, const context_ptr &ctx);
+
+    bs_obj_ptr visit(const slice_node &n, const context_ptr &ctx);
 
     bs_runtime &get_runtime() { return rt_; }
 

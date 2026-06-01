@@ -1,5 +1,5 @@
 //
-// Created by bibib on 2026/3/1.
+// Created by bibibird on 2026/3/1.
 //
 
 #ifndef BSHARP_BS_NUMBER_H
@@ -22,6 +22,8 @@ public:
     [[nodiscard]] bool to_boolean() const override;
 
     [[nodiscard]] std::string type_name() const override;
+
+    [[nodiscard]] size_t hash() const override;
 
     [[nodiscard]] bs_obj_ptr add(interpreter &visitor, const bs_obj_ptr &rhs) const override;
 

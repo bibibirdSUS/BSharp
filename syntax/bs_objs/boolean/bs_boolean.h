@@ -1,5 +1,5 @@
 //
-// Created by bibib on 2026/3/7.
+// Created by bibibird on 2026/3/7.
 //
 
 #ifndef BSHARP_BS_BOOLEAN_H
@@ -20,6 +20,8 @@ public:
     [[nodiscard]] std::string type_name() const override;
 
     [[nodiscard]] bs_obj_ptr eq(interpreter &visitor, const bs_obj_ptr &rhs) const override;
+
+    [[nodiscard]] size_t hash() const override;
 
 private:
     const bool value_;

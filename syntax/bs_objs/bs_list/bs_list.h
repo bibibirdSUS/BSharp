@@ -1,5 +1,5 @@
 //
-// Created by bibib on 2026/5/22.
+// Created by bibibird on 2026/5/22.
 //
 
 #ifndef BSHARP_BS_LIST_H
@@ -27,9 +27,13 @@ public:
 
     [[nodiscard]] size_t len() const override;
 
+    [[nodiscard]] size_t hash() const override;
+
     [[nodiscard]] bs_obj_ptr add(interpreter &visitor, const bs_obj_ptr &rhs) const override;
 
     [[nodiscard]] bs_obj_ptr mul(interpreter &visitor, const bs_obj_ptr &rhs) const override;
+
+    [[nodiscard]] bs_obj_ptr slice(interpreter &visitor, int start, int end, int step) const override;
 
     void append(bs_obj_ptr obj);
 

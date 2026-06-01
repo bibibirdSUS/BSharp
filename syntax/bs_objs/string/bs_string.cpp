@@ -1,11 +1,36 @@
 //
-// Created by bibib on 2026/4/5.
+// Created by bibibird on 2026/4/5.
 //
 
 #include "bs_string.h"
+#include <functional>
+
 #include "../boolean/bs_boolean.h"
 #include "../number/bs_number.h"
 #include "../../interpreter/interpreter.h"
+
+namespace {
+    size_t get_utf8_length(const std::string &str) {
+        size_t char_count = 0;
+
+        for (const char i: str)
+            if ((static_cast<unsigned char>(i) & 0xC0) != 0x80)
+                char_count++;
+
+        return char_count;
+    }
+
+    size_t get_utf8_byte_pos(const std::string &str, const size_t target_char_idx) {
+        size_t char_count = 0;
+        for (size_t byte_idx = 0; byte_idx < str.size(); ++byte_idx)
+            if ((static_cast<unsigned char>(str[byte_idx]) & 0xC0) != 0x80) {
+                if (char_count == target_char_idx) return byte_idx;
+                char_count++;
+            }
+
+        return std::string::npos;
+    }
+}
 
 bs_string::bs_string(std::string value) : str_(std::move(value)) {
 }
@@ -24,6 +49,10 @@ std::string bs_string::to_string() const {
 
 bool bs_string::to_boolean() const {
     return !str_.empty();
+}
+
+size_t bs_string::hash() const {
+    return std::hash<std::string>{}(str_);
 }
 
 bs_obj::bs_obj_ptr bs_string::add(interpreter &visitor, const bs_obj_ptr &rhs) const {
@@ -76,7 +105,7 @@ bs_obj::bs_obj_ptr bs_string::mul(interpreter &visitor, const bs_obj_ptr &rhs) c
 
 bs_obj::bs_obj_ptr bs_string::eq(interpreter &visitor, const bs_obj_ptr &rhs) const {
     if (const auto rhs_casted = dynamic_cast<const bs_string *>(rhs.get()))
-        return (str_ == rhs_casted->str_) ? visitor.get_runtime().true_obj() : visitor.get_runtime().false_obj();
+        return str_ == rhs_casted->str_ ? visitor.get_runtime().true_obj() : visitor.get_runtime().false_obj();
     return visitor.get_runtime().false_obj();
 }
 
@@ -87,19 +116,63 @@ bs_obj::bs_obj_ptr bs_string::subscript(interpreter &visitor, const bs_obj_ptr &
             throw std::runtime_error{"string index must be an integer, got " + idx_number->to_string()};
 
         int idx = static_cast<int>(value);
-        if (idx < 0) idx = static_cast<int>(str_.size()) + idx;
+        const size_t utf8_len = len();
 
-        if (idx < 0 || static_cast<size_t>(idx) >= str_.size())
+        if (idx < 0) idx = static_cast<int>(utf8_len) + idx;
+
+        if (idx < 0 || static_cast<size_t>(idx) >= utf8_len)
             throw std::runtime_error{
                 "string index out of range: index is " + std::to_string(idx) +
                 ", but length is " + std::to_string(str_.size())
             };
 
-        return visitor.get_runtime().get_string(std::string(1, str_[idx]));
+        const size_t byte_start = get_utf8_byte_pos(str_, static_cast<size_t>(idx));
+        const size_t byte_end = static_cast<size_t>(idx) + 1 < utf8_len
+                                    ? get_utf8_byte_pos(str_, static_cast<size_t>(idx) + 1)
+                                    : str_.size();
+
+        const size_t char_bytes = byte_end - byte_start;
+        return visitor.get_runtime().get_string(str_.substr(byte_start, char_bytes));
     }
     throw std::runtime_error{"string index must be a number, got " + index->type_name()};
 }
 
+bs_obj::bs_obj_ptr bs_string::slice(interpreter &visitor, const int start, const int end, const int step) const {
+    const size_t utf8_len = len();
+    if (start == end) return visitor.get_runtime().get_string("");
+
+    // Cache byte positions for O(N) slicing
+    std::vector<size_t> byte_positions;
+    byte_positions.reserve(utf8_len + 1);
+    for (size_t byte_idx = 0; byte_idx < str_.size(); ++byte_idx)
+        if ((static_cast<unsigned char>(str_[byte_idx]) & 0xC0) != 0x80)
+            byte_positions.push_back(byte_idx);
+    byte_positions.push_back(str_.size());
+
+    if (step == 1) {
+        if (start >= end) return visitor.get_runtime().get_string("");
+        const size_t b_start = byte_positions[static_cast<size_t>(start)];
+        const size_t b_end = byte_positions[static_cast<size_t>(end)];
+        return visitor.get_runtime().get_string(str_.substr(b_start, b_end - b_start));
+    }
+
+    std::string result;
+    if (step > 0) {
+        for (int i = start; i < end; i += step) {
+            const size_t b_start = byte_positions[static_cast<size_t>(i)];
+            const size_t b_end = byte_positions[static_cast<size_t>(i) + 1];
+            result += str_.substr(b_start, b_end - b_start);
+        }
+    } else {
+        for (int i = start; i > end; i += step) {
+            const size_t b_start = byte_positions[static_cast<size_t>(i)];
+            const size_t b_end = byte_positions[static_cast<size_t>(i) + 1];
+            result += str_.substr(b_start, b_end - b_start);
+        }
+    }
+    return visitor.get_runtime().get_string(std::move(result));
+}
+
 size_t bs_string::len() const {
-    return str_.size();
+    return get_utf8_length(str_);
 }

@@ -1,5 +1,5 @@
 //
-// Created by bibib on 2026/3/7.
+// Created by bibibird on 2026/3/7.
 //
 
 #ifndef BSHARP_BS_NONE_H
@@ -18,6 +18,8 @@ public:
     [[nodiscard]] std::string type_name() const override;
 
     [[nodiscard]] bool to_boolean() const override;
+
+    [[nodiscard]] size_t hash() const override;
 };
 
 #endif //BSHARP_BS_NONE_H

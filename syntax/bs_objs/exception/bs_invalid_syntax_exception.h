@@ -1,5 +1,5 @@
 //
-// Created by bibib on 2026/3/1.
+// Created by bibibird on 2026/3/1.
 //
 
 #ifndef BSHARP_BS_INVALID_SYNTAX_EXCEPTION_H

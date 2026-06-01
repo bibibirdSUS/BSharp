@@ -1,9 +1,10 @@
 //
-// Created by bibib on 2026/3/1.
+// Created by bibibird on 2026/3/1.
 //
 
 #include "bs_number.h"
 
+#include <functional>
 #include <cmath>
 
 #include "../../utils.h"
@@ -29,6 +30,10 @@ std::string bs_number::to_string() const {
 
 std::string bs_number::type_name() const {
     return "Number";
+}
+
+size_t bs_number::hash() const {
+    return std::hash<std::string>{}("Number");
 }
 
 bs_obj::bs_obj_ptr bs_number::add(interpreter &visitor, const bs_obj_ptr &rhs) const {

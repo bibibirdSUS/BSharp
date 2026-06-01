@@ -43,4 +43,5 @@ add_executable(BSharp main.cpp
         syntax/interpreter/signals.h
         syntax/bs_objs/bs_list/bs_list.cpp
         syntax/bs_objs/bs_list/bs_list.h
+        syntax/bs_objs/exception/simple_wcwidth.h
 )

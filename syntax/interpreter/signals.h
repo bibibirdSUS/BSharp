@@ -1,5 +1,5 @@
 //
-// Created by bibib on 2026/5/19.
+// Created by bibibird on 2026/5/19.
 //
 
 #ifndef BSHARP_SIGNALS_H

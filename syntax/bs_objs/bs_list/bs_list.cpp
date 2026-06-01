@@ -1,14 +1,20 @@
 //
-// Created by bibib on 2026/5/22.
+// Created by bibibird on 2026/5/22.
 //
 
 #include "bs_list.h"
 
 #include <limits>
 #include <sstream>
+#include <unordered_set>
 
+#include "../../utils.h"
 #include "../number/bs_number.h"
 #include "../../interpreter/interpreter.h"
+
+namespace {
+    thread_local std::unordered_set<const bs_list *> lists_being_hashed;
+}
 
 bs_list::bs_list(std::vector<bs_obj_ptr> elements) : elements_(std::move(elements)) {
 }
@@ -95,6 +101,25 @@ size_t bs_list::len() const {
     return size();
 }
 
+size_t bs_list::hash() const {
+    if (lists_being_hashed.contains(this))
+        throw std::runtime_error{"cannot hash recursive list"};
+
+    lists_being_hashed.insert(this);
+
+    size_t seed = hash_combine(std::hash<std::string>{}("List"), elements_.size());
+    try {
+        for (const auto &element: elements_)
+            seed = hash_combine(seed, element ? element->hash() : 0);
+    } catch (...) {
+        lists_being_hashed.erase(this);
+        throw;
+    }
+
+    lists_being_hashed.erase(this);
+    return seed;
+}
+
 bs_obj_ptr bs_list::add(interpreter &visitor, const bs_obj_ptr &rhs) const {
     if (const auto rhs_casted = dynamic_cast<const bs_list *>(rhs.get())) {
         std::vector<bs_obj_ptr> concatenated_elements;
@@ -131,6 +156,22 @@ bs_obj_ptr bs_list::mul(interpreter &visitor, const bs_obj_ptr &rhs) const {
     }
 
     return bs_obj::mul(visitor, rhs);
+}
+
+bs_obj::bs_obj_ptr bs_list::slice(interpreter &visitor, const int start, const int end, const int step) const {
+    std::vector<bs_obj_ptr> sliced_elements;
+    sliced_elements.reserve(std::abs(end - start) / std::abs(step) + 1);
+
+    if (step > 0)
+        for (int i = start; i < end; i += step)
+            sliced_elements.push_back(elements_[i]);
+
+    else
+        for (int i = start; i > end; i += step)
+            sliced_elements.push_back(elements_[i]);
+
+
+    return bs_runtime::get_list(std::move(sliced_elements));
 }
 
 void bs_list::append(bs_obj_ptr obj) {
