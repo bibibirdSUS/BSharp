@@ -20,7 +20,7 @@ struct span {
 };
 
 struct parameter {
-    std::string name;
+    token t;
     bool is_variadic;
     std::string type = "Any"; // will be used in the future
 };
@@ -136,14 +136,16 @@ struct factorial_node final : node {
 };
 
 struct var_assign_node final : node {
-    std::string name;
+    node_ptr target;
     node_ptr value;
     token_type op;
 
-    explicit var_assign_node(const token &var, const token_type op, node_ptr value) : node(span{
-            var.start, value->where.end
-        }),
-        name(var.literal), value(std::move(value)), op(op) {
+    var_assign_node(node_ptr target, const token_type op, node_ptr value) : node(span{
+                                                                                target->where.start, value->where.end
+                                                                            }),
+                                                                            target(std::move(target)),
+                                                                            value(std::move(value)),
+                                                                            op(op) {
     }
 
     bs_obj_ptr accept(interpreter &visitor, context_ptr ctx) override;
@@ -212,14 +214,14 @@ struct while_node final : node {
 };
 
 struct for_node final : node {
-    std::string name;
+    node_ptr target;
     node_ptr start;
     node_ptr end;
     node_ptr step;
     node_ptr body;
 
-    for_node(std::string name, node_ptr start, node_ptr end, node_ptr step, node_ptr body, span where) : node(
-            std::move(where)), name(std::move(name)), start(std::move(start)), end(std::move(end)),
+    for_node(node_ptr name, node_ptr start, node_ptr end, node_ptr step, node_ptr body, span where) : node(
+            std::move(where)), target(std::move(name)), start(std::move(start)), end(std::move(end)),
         step(std::move(step)), body(std::move(body)) {
     }
 
@@ -324,22 +326,6 @@ struct subscript_node final : node {
     [[nodiscard]] node_ptr copy() const override;
 };
 
-struct subscript_assign_node final : node {
-    node_ptr left;
-    node_ptr index;
-    node_ptr value;
-    token_type op;
-
-    subscript_assign_node(node_ptr left, node_ptr index, const token_type op, node_ptr value,
-                          span where) : node(std::move(where)), left(std::move(left)), index(std::move(index)),
-                                        value(std::move(value)), op(op) {
-    }
-
-    bs_obj_ptr accept(interpreter &visitor, context_ptr ctx) override;
-
-    [[nodiscard]] node_ptr copy() const override;
-};
-
 struct slice_node final : node {
     node_ptr left;
     node_ptr start;
@@ -348,6 +334,59 @@ struct slice_node final : node {
 
     slice_node(node_ptr left, node_ptr start, node_ptr end, node_ptr step, span where) : node(std::move(where)),
         left(std::move(left)), start(std::move(start)), end(std::move(end)), step(std::move(step)) {
+    }
+
+    bs_obj_ptr accept(interpreter &visitor, context_ptr ctx) override;
+
+    [[nodiscard]] node_ptr copy() const override;
+};
+
+struct destructuring_assign_node final : node {
+    node_ptr targets;
+    node_ptr right;
+
+    destructuring_assign_node(node_ptr targets, node_ptr right) : node(span{
+                                                                      targets->where.start, right->where.end
+                                                                  }),
+                                                                  targets(std::move(targets)), right(std::move(right)) {
+    }
+
+
+    bs_obj_ptr accept(interpreter &visitor, context_ptr ctx) override;
+
+    [[nodiscard]] node_ptr copy() const override;
+};
+
+struct expr_list_node final : node {
+    std::vector<node_ptr> expressions;
+
+    expr_list_node(std::vector<node_ptr> &&expressions, span where) : node(std::move(where)),
+                                                                      expressions(std::move(expressions)) {
+    }
+
+    bs_obj_ptr accept(interpreter &visitor, context_ptr ctx) override;
+
+    [[nodiscard]] node_ptr copy() const override;
+};
+
+struct foreach_node final : node {
+    node_ptr target;
+    node_ptr container;
+    node_ptr body;
+
+    foreach_node(node_ptr target, node_ptr container, node_ptr body, span where) : node(std::move(where)),
+        target(std::move(target)), container(std::move(container)), body(std::move(body)) {
+    }
+
+    bs_obj_ptr accept(interpreter &visitor, context_ptr ctx) override;
+
+    [[nodiscard]] node_ptr copy() const override;
+};
+
+struct unpack_node final : node {
+    node_ptr target;
+
+    explicit unpack_node(node_ptr target) : node(span{target->where.start, target->where.end}), target(std::move(target)) {
     }
 
     bs_obj_ptr accept(interpreter &visitor, context_ptr ctx) override;

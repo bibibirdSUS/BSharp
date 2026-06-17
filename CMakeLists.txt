@@ -41,7 +41,14 @@ add_executable(BSharp main.cpp
         syntax/bs_objs/builtin/bs_builtin_function.h
         syntax/bs_objs/builtin/builtins.h
         syntax/interpreter/signals.h
-        syntax/bs_objs/bs_list/bs_list.cpp
-        syntax/bs_objs/bs_list/bs_list.h
+        syntax/bs_objs/list/bs_list.cpp
+        syntax/bs_objs/list/bs_list.h
         syntax/bs_objs/exception/simple_wcwidth.h
+        syntax/bs_objs/iterator/bs_iterator.h
+        syntax/bs_objs/list/bs_list_iterator.cpp
+        syntax/bs_objs/list/bs_list_iterator.h
+        syntax/bs_objs/tuple/bs_tuple.cpp
+        syntax/bs_objs/tuple/bs_tuple.h
+        syntax/bs_objs/tuple/bs_tuple_iterator.cpp
+        syntax/bs_objs/tuple/bs_tuple_iterator.h
 )

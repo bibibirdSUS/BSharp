@@ -17,7 +17,7 @@ void context::set(const std::string &name, bs_obj::bs_obj_ptr value) {
         parent_->set(name, std::move(value));
         return;
     }
-    symbols_[name] = std::move(value);
+    throw std::runtime_error{"undefined variable '" + name + "'"};
 }
 
 void context::define(const std::string &name, bs_obj::bs_obj_ptr value) {

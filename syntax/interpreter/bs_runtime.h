@@ -32,6 +32,8 @@ public:
 
     static bs_obj_ptr get_list(std::vector<bs_obj_ptr> elements);
 
+    static bs_obj_ptr get_tuple(std::vector<bs_obj_ptr> elements);
+
 private:
     const bs_obj_ptr bs_true;
     const bs_obj_ptr bs_false;

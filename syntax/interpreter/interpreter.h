@@ -15,6 +15,11 @@
 
 typedef bs_obj::bs_obj_ptr bs_obj_ptr;
 
+enum class assign_actions{
+    DEFINE,
+    SET
+};
+
 class interpreter {
 public:
     typedef context::context_ptr context_ptr;
@@ -67,11 +72,27 @@ public:
 
     bs_obj_ptr visit(const subscript_node &n, const context_ptr &ctx);
 
-    bs_obj_ptr visit(const subscript_assign_node &n, const context_ptr &ctx);
-
     bs_obj_ptr visit(const slice_node &n, const context_ptr &ctx);
 
+    bs_obj_ptr visit(const destructuring_assign_node &n, const context_ptr &ctx);
+
+    bs_obj_ptr visit(const expr_list_node &n, const context_ptr &ctx);
+
+    bs_obj_ptr visit(const foreach_node &n, const context_ptr &ctx);
+
+    static bs_obj_ptr visit(const unpack_node &n, const context_ptr &ctx);
+
     bs_runtime &get_runtime() { return rt_; }
+
+    void assign_target(const node *target, const bs_obj_ptr &value, const context_ptr &ctx, ::assign_actions action);
+
+    [[noreturn]] void throw_runtime_error(const std::string &msg) const;
+
+    const span &get_current_span() const { return current_span_; }
+
+    const std::string &get_source_code() const { return source_code_; }
+
+    const std::vector<stack_frame> &get_call_stack() const { return call_stack_; }
 
 private:
     const std::string source_code_;
@@ -79,7 +100,7 @@ private:
     context_ptr global_context_;
     std::vector<stack_frame> call_stack_;
     bs_runtime rt_;
+    span current_span_;
 };
-
 
 #endif //BSHARP_INTERPRETER_H

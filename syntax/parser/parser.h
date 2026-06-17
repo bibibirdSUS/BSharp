@@ -61,6 +61,10 @@ private:
 
     node_ptr assignment();
 
+    node_ptr expr_list();
+
+    node_ptr expr_atom();
+
     node_ptr logic_or();
 
     node_ptr logic_xor();

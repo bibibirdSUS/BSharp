@@ -11,6 +11,8 @@
 #include <cstdint>
 #include <functional>
 
+#include "iterator/bs_iterator.h"
+
 
 class interpreter;
 class context;
@@ -115,8 +117,12 @@ public:
         return std::hash<const bs_obj *>{}(this);
     }
 
-    [[nodiscard]] virtual bs_obj_ptr slice(interpreter &visitor, int start, int end, int step) const {
+    [[nodiscard]] virtual bs_obj_ptr slice(interpreter &visitor, int64_t start, int64_t end, int64_t step) const {
         throw std::runtime_error{type_name() + " does not support slicing"};
+    }
+
+    [[nodiscard]] virtual std::unique_ptr<bs_iterator> iter() const {
+        throw std::runtime_error{type_name() + " is not iterable"};
     }
 
     //for c++

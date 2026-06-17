@@ -27,7 +27,7 @@ public:
 
     [[nodiscard]] bs_obj_ptr subscript(interpreter &visitor, const bs_obj_ptr &index) const override;
 
-    [[nodiscard]] bs_obj_ptr slice(interpreter &visitor, int start, int end, int step) const override;
+    [[nodiscard]] bs_obj_ptr slice(interpreter &visitor, int64_t start, int64_t end, int64_t step) const override;
 
     [[nodiscard]] size_t len() const override;
 

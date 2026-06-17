@@ -59,6 +59,30 @@ public:
         return std::abs(std::floor(d) - d) < eps;
     }
 
+    bool is_int() const {
+        return is_int(value_);
+    }
+
+    int64_t as_int() const {
+        if (!std::isfinite(value_))
+            throw std::runtime_error{
+                "integer value cannot be NaN or Infinity"
+            };
+
+        if (!is_int(value_))
+            throw std::runtime_error{
+                "expected integer, got " + to_string()
+            };
+
+        if (value_ < static_cast<double>(std::numeric_limits<int64_t>::min()) ||
+            value_ > static_cast<double>(std::numeric_limits<int64_t>::max()))
+            throw std::runtime_error{
+                "integer value is outside the int64 range"
+            };
+
+        return static_cast<int64_t>(value_);
+    }
+
     [[nodiscard]] double value() const {
         return value_;
     }

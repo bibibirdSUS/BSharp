@@ -68,10 +68,11 @@ bs_obj::bs_obj_ptr bs_string::add(interpreter &visitor, const bs_obj_ptr &rhs) c
 
 bs_obj::bs_obj_ptr bs_string::mul(interpreter &visitor, const bs_obj_ptr &rhs) const {
     if (const auto rhs_casted = dynamic_cast<const bs_number *>(rhs.get())) {
-        const double val = rhs_casted->value();
 
-        if (!bs_number::is_int(val))
+        if (!rhs_casted->is_int())
             throw std::runtime_error{"string repeat count must be an integer, got " + rhs_casted->to_string()};
+
+        const double val = rhs_casted->value();
 
         if (val < 0)
             throw std::runtime_error{"string repeat count must be non-negative, got " + rhs_casted->to_string()};
@@ -80,7 +81,7 @@ bs_obj::bs_obj_ptr bs_string::mul(interpreter &visitor, const bs_obj_ptr &rhs) c
             throw std::runtime_error{"string repeat count is too large, got " + rhs_casted->to_string()};
 
 
-        const auto times = static_cast<size_t>(val);
+        const auto times = rhs_casted->as_int();
 
         if (times == 0)
             return visitor.get_runtime().get_string("");
@@ -111,14 +112,13 @@ bs_obj::bs_obj_ptr bs_string::eq(interpreter &visitor, const bs_obj_ptr &rhs) co
 
 bs_obj::bs_obj_ptr bs_string::subscript(interpreter &visitor, const bs_obj_ptr &index) const {
     if (const auto idx_number = dynamic_cast<const bs_number *>(index.get())) {
-        const double value = idx_number->value();
-        if (!bs_number::is_int(value))
+        if (!idx_number->is_int())
             throw std::runtime_error{"string index must be an integer, got " + idx_number->to_string()};
 
-        int idx = static_cast<int>(value);
+        int64_t idx = idx_number->as_int();
         const size_t utf8_len = len();
 
-        if (idx < 0) idx = static_cast<int>(utf8_len) + idx;
+        if (idx < 0) idx = static_cast<int64_t>(utf8_len) + idx;
 
         if (idx < 0 || static_cast<size_t>(idx) >= utf8_len)
             throw std::runtime_error{
@@ -137,7 +137,7 @@ bs_obj::bs_obj_ptr bs_string::subscript(interpreter &visitor, const bs_obj_ptr &
     throw std::runtime_error{"string index must be a number, got " + index->type_name()};
 }
 
-bs_obj::bs_obj_ptr bs_string::slice(interpreter &visitor, const int start, const int end, const int step) const {
+bs_obj::bs_obj_ptr bs_string::slice(interpreter &visitor, const int64_t start, const int64_t end, const int64_t step) const {
     const size_t utf8_len = len();
     if (start == end) return visitor.get_runtime().get_string("");
 
@@ -158,19 +158,19 @@ bs_obj::bs_obj_ptr bs_string::slice(interpreter &visitor, const int start, const
 
     std::string result;
     if (step > 0) {
-        for (int i = start; i < end; i += step) {
+        for (int64_t i = start; i < end; i += step) {
             const size_t b_start = byte_positions[static_cast<size_t>(i)];
             const size_t b_end = byte_positions[static_cast<size_t>(i) + 1];
             result += str_.substr(b_start, b_end - b_start);
         }
     } else {
-        for (int i = start; i > end; i += step) {
+        for (int64_t i = start; i > end; i += step) {
             const size_t b_start = byte_positions[static_cast<size_t>(i)];
             const size_t b_end = byte_positions[static_cast<size_t>(i) + 1];
             result += str_.substr(b_start, b_end - b_start);
         }
     }
-    return visitor.get_runtime().get_string(std::move(result));
+    return visitor.get_runtime().get_string(result);
 }
 
 size_t bs_string::len() const {

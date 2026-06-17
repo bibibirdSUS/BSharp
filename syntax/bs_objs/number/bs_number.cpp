@@ -79,7 +79,7 @@ bs_obj::bs_obj_ptr bs_number::mod(interpreter &visitor, const bs_obj_ptr &rhs) c
     if (!(std::abs(value_ - std::round(value_)) < eps) || !(
             std::abs(rhs_casted->value_ - std::round(rhs_casted->value_)) < eps))
         throw std::runtime_error{"modulo requires integer operands"};
-    return visitor.get_runtime().get_number(static_cast<int>(value_) % static_cast<int>(rhs_casted->value_));
+    return visitor.get_runtime().get_number(static_cast<double>(as_int() % rhs_casted->as_int()));
 }
 
 bs_obj::bs_obj_ptr bs_number::fact(interpreter &visitor) const {

@@ -85,8 +85,7 @@ bs_obj_ptr var_assign_node::accept(interpreter &visitor, const context_ptr ctx) 
 }
 
 node_ptr var_assign_node::copy() const {
-    return std::make_unique<var_assign_node>(token{name, token_type::IDENTIFIER, where.start, where.start}, op,
-                                             value->copy());
+    return std::make_unique<var_assign_node>(target->copy(), op, value->copy());
 }
 
 bs_obj_ptr var_access_node::accept(interpreter &visitor, const context_ptr ctx) {
@@ -128,7 +127,8 @@ bs_obj_ptr for_node::accept(interpreter &visitor, const context_ptr ctx) {
 }
 
 node_ptr for_node::copy() const {
-    return std::make_unique<for_node>(name, start->copy(), end->copy(), step ? step->copy() : nullptr, body->copy(),
+    return std::make_unique<for_node>(target->copy(), start->copy(), end->copy(), step ? step->copy() : nullptr,
+                                      body->copy(),
                                       span{where.start, where.end});
 }
 
@@ -196,19 +196,44 @@ node_ptr subscript_node::copy() const {
     return std::make_unique<subscript_node>(left->copy(), index->copy(), span{where.start, where.end});
 }
 
-bs_obj_ptr subscript_assign_node::accept(interpreter &visitor, const context_ptr ctx) {
-    return visitor.visit(*this, ctx);
-}
-
-node_ptr subscript_assign_node::copy() const {
-    return std::make_unique<subscript_assign_node>(left->copy(), index->copy(), op, value->copy(),
-                                                   span{where.start, where.end});
-}
-
-bs_obj_ptr slice_node::accept(interpreter &visitor, context_ptr ctx) {
+bs_obj_ptr slice_node::accept(interpreter &visitor, const context_ptr ctx) {
     return visitor.visit(*this, ctx);
 }
 
 node_ptr slice_node::copy() const {
-    return std::make_unique<slice_node>(left->copy(), start->copy(), end->copy(), step->copy(), span{where.start, where.end});
+    return std::make_unique<slice_node>(left->copy(), start->copy(), end->copy(), step->copy(),
+                                        span{where.start, where.end});
+}
+
+bs_obj_ptr destructuring_assign_node::accept(interpreter &visitor, const context_ptr ctx) {
+    return visitor.visit(*this, ctx);
+}
+
+node_ptr destructuring_assign_node::copy() const {
+    return std::make_unique<destructuring_assign_node>(targets->copy(), right->copy());
+}
+
+bs_obj_ptr expr_list_node::accept(interpreter &visitor, const context_ptr ctx) {
+    return visitor.visit(*this, ctx);
+}
+
+node_ptr expr_list_node::copy() const {
+    return std::make_unique<expr_list_node>(clone_nodes(expressions), span{where.start, where.end});
+}
+
+bs_obj_ptr foreach_node::accept(interpreter &visitor, context_ptr ctx) {
+    return visitor.visit(*this, ctx);
+}
+
+node_ptr foreach_node::copy() const {
+    return std::make_unique<foreach_node>(target->copy(), container->copy(), body->copy(),
+                                          span{where.start, where.end});
+}
+
+bs_obj_ptr unpack_node::accept(interpreter &visitor, const context_ptr ctx) {
+    return interpreter::visit(*this, ctx);
+}
+
+node_ptr unpack_node::copy() const {
+    return std::make_unique<unpack_node>(target->copy());
 }

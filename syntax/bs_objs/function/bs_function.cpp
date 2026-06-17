@@ -34,13 +34,13 @@ bs_obj_ptr bs_function::call(interpreter &visitor, const std::vector<bs_obj_ptr>
     const auto function_context = std::make_shared<context>(closure_);
 
     for (size_t i = 0; i < fixed_param_count; ++i)
-        function_context->define(params_[i].name, args[i]);
+        function_context->define(params_[i].t.literal, args[i]);
 
     if (variadic) {
         std::vector<bs_obj_ptr> rest_args;
         for (size_t i = fixed_param_count; i < args.size(); ++i)
             rest_args.push_back(args[i]);
-        function_context->define(params_.back().name, bs_runtime::get_list(std::move(rest_args)));
+        function_context->define(params_.back().t.literal, bs_runtime::get_list(std::move(rest_args)));
     }
 
     try {

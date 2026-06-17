@@ -93,7 +93,7 @@ void print_node(const node *n, const int indent = 0) {
         std::cout << "Factorial" << std::endl;
         print_node(fac->operand.get(), indent + 1);
     } else if (const auto assign = dynamic_cast<const var_assign_node *>(n)) {
-        std::cout << "Var Assign: " << assign->name << std::endl;
+        std::cout << "Var Assign: " << token_type_to_string(assign->op) << std::endl;
         print_node(assign->value.get(), indent + 1);
     } else if (const auto access = dynamic_cast<const var_access_node *>(n)) {
         std::cout << "Var Access: " << access->name << std::endl;
@@ -119,7 +119,7 @@ void print_node(const node *n, const int indent = 0) {
         std::cout << "Body:" << std::endl;
         print_node(while_n->body.get(), indent + 2);
     } else if (const auto for_n = dynamic_cast<const for_node *>(n)) {
-        std::cout << "For Statement (" << for_n->name << "):" << std::endl;
+        std::cout << "For Statement (" << for_n->target << "):" << std::endl;
         for (int i = 0; i < indent + 1; ++i) std::cout << "  ";
         std::cout << "Start:" << std::endl;
         print_node(for_n->start.get(), indent + 2);

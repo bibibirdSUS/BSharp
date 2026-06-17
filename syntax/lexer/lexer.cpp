@@ -73,6 +73,7 @@ token_type get_identifier_type(const std::string &identifier) {
     if (identifier == "break") return token_type::BREAK;
     if (identifier == "continue") return token_type::CONTINUE;
     if (identifier == "return") return token_type::RETURN;
+    if (identifier == "in") return token_type::IN;
 
     return token_type::IDENTIFIER;
 }

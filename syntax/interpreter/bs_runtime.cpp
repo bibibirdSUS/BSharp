@@ -5,9 +5,10 @@
 #include "bs_runtime.h"
 
 #include "../bs_objs/boolean/bs_boolean.h"
-#include "../bs_objs/bs_list/bs_list.h"
+#include "../bs_objs/list/bs_list.h"
 #include "../bs_objs/function/bs_function.h"
 #include "../bs_objs/null/bs_null.h"
+#include "../bs_objs/tuple/bs_tuple.h"
 
 bs_runtime::bs_runtime() : bs_true(std::make_shared<bs_boolean>(true)), bs_false(std::make_shared<bs_boolean>(false)),
                            bs_null(std::make_shared<::bs_null>()) {
@@ -54,4 +55,8 @@ bs_obj_ptr bs_runtime::get_function(const std::string &name, const std::vector<p
 
 bs_obj_ptr bs_runtime::get_list(std::vector<bs_obj_ptr> elements) {
     return std::make_shared<bs_list>(std::move(elements));
+}
+
+bs_obj_ptr bs_runtime::get_tuple(std::vector<bs_obj_ptr> elements) {
+    return std::make_shared<bs_tuple>(std::move(elements));
 }

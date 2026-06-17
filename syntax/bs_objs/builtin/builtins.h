@@ -9,6 +9,7 @@
 #include <chrono>
 #include <cctype>
 #include <cmath>
+#include <charconv>
 #include <cstdint>
 #include <format>
 #include <iostream>
@@ -16,6 +17,7 @@
 #include <string>
 
 #include "bs_builtin_function.h"
+#include "../number/bs_number.h"
 #include "../../utils.h"
 
 
@@ -76,12 +78,12 @@ namespace {
                 args[index]->type_name()
             };
 
-        const double value = number->value();
-        if (!bs_number::is_int(value))
+        if (!number->is_int())
             throw std::runtime_error{
                 name + "() argument " + std::to_string(index + 1) +
                 " must be an integer, got " + number->to_string()
             };
+        const double value = number->value();
         if (value < static_cast<double>(std::numeric_limits<int64_t>::min()) ||
             value >= static_cast<double>(std::numeric_limits<int64_t>::max()))
             throw std::runtime_error{name + "() argument " + std::to_string(index + 1) + " is outside the int64 range"};
@@ -173,15 +175,21 @@ static void register_all(const std::shared_ptr<context> &global_ctx) {
     register_fn(global_ctx, "int", [](interpreter &visitor, arg &args) {
         expect_arity("int", args.size(), 1);
         ensure_numeric_source("int", args[0], "Integer");
-        const std::string value = args[0]->to_string();
-        size_t index = 0;
-        try {
-            const long long converted = std::stoll(value, &index);
-            ensure_only_trailing_spaces("int", value, index, "Integer");
+
+        if (const auto number = dynamic_cast<const bs_number *>(args[0].get())) {
+            const int64_t converted = number->as_int();
             return visitor.get_runtime().get_number(static_cast<double>(converted));
-        } catch (const std::exception &) {
-            throw std::runtime_error{"int() cannot convert '" + value + "' to Integer"};
         }
+
+        const std::string value = args[0]->to_string();
+        const char *start = value.data();
+        const char *end = start + value.size();
+        int64_t converted = 0;
+        const auto [ptr, ec] = std::from_chars(start, end, converted);
+        if (ec != std::errc() || ptr == start)
+            throw std::runtime_error{"int() cannot convert '" + value + "' to Integer"};
+        ensure_only_trailing_spaces("int", value, static_cast<size_t>(ptr - start), "Integer");
+        return visitor.get_runtime().get_number(static_cast<double>(converted));
     });
 
     register_fn(global_ctx, "number", [](interpreter &visitor, arg &args) {

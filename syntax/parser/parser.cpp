@@ -5,6 +5,7 @@
 #include "parser.h"
 
 #include <cassert>
+#include <unordered_set>
 
 #include "../utils.h"
 #include "../bs_objs/exception/bs_invalid_syntax_exception.h"
@@ -29,6 +30,27 @@ namespace {
 
     std::string expected_message(const std::string &expected, const token &found) {
         return "expected " + expected + ", but found " + describe_token(found);
+    }
+
+    const node *find_first_invalid_target(const bool compound, const node *target) {
+        if (dynamic_cast<const var_access_node *>(target))
+            return nullptr;
+
+        if (dynamic_cast<const subscript_node *>(target))
+            return nullptr;
+
+        if (const auto *expr_list = dynamic_cast<const expr_list_node *>(target)) {
+            if (compound)
+                return target;
+
+            for (const auto &expr: expr_list->expressions)
+                if (const node *invalid = find_first_invalid_target(false, expr.get()))
+                    return invalid;
+
+            return nullptr;
+        }
+
+        return target;
     }
 }
 
@@ -150,40 +172,86 @@ node_ptr parser::until_stmt() {
 node_ptr parser::for_stmt() {
     const position start_pos = advance().start;
 
-    if (current().type != token_type::IDENTIFIER)
-        throw bs_invalid_syntax_exception{
-            expected_message("identifier after 'for'", current()), source_code_, current().start, current().end
-        };
-    const std::string var_name = current().literal;
-    if (peek(1).type != token_type::EQUALS)
-        throw bs_invalid_syntax_exception{
-            expected_message("'=' after for loop variable", peek(1)), source_code_, peek(1).start, peek(1).end
-        };
+    node_ptr target = expr_list();
 
-    node_ptr variable = assignment();
-    if (current().type != token_type::TILDE)
-        throw bs_invalid_syntax_exception{
-            expected_message("'~' after for start value", current()), source_code_, current().start, current().end
-        };
-    advance();
-    node_ptr end = expr();
-    node_ptr step = nullptr;
-    if (current().type == token_type::COLON) {
+    if (current().type == token_type::EQUALS) {
+        if (!dynamic_cast<var_access_node *>(target.get()))
+            throw bs_invalid_syntax_exception{
+                "for loop target must be a variable name",
+                source_code_,
+                target->where.start,
+                target->where.end
+            };
+
         advance();
-        step = expr();
-    }
-    if (current().type != token_type::DO)
-        throw bs_invalid_syntax_exception{
-            expected_message("'do' before 'for' loop body", current()), source_code_,
-            current().start,
-            current().end
-        };
-    advance();
-    node_ptr body = block();
 
-    const position end_pos = body->where.end;
-    return std::make_unique<for_node>(var_name, std::move(variable), std::move(end), std::move(step), std::move(body),
-                                      span{start_pos, end_pos});
+        node_ptr start = expr();
+
+        if (current().type != token_type::TILDE)
+            throw bs_invalid_syntax_exception{
+                expected_message("'~' after for start value", current()),
+                source_code_,
+                current().start,
+                current().end
+            };
+
+        advance();
+
+        node_ptr end = expr();
+
+        node_ptr step = nullptr;
+
+        if (current().type == token_type::COLON) {
+            advance();
+            step = expr();
+        }
+
+        if (current().type != token_type::DO)
+            throw bs_invalid_syntax_exception{
+                expected_message("'do' before for body", current()),
+                source_code_,
+                current().start,
+                current().end
+            };
+
+        advance();
+
+        node_ptr body = block();
+
+        return std::make_unique<for_node>(
+            std::move(target),
+            std::move(start),
+            std::move(end),
+            std::move(step),
+            std::move(body),
+            span{start_pos, body->where.end}
+        );
+    }
+
+    if (current().type == token_type::IN) {
+        advance();
+
+        node_ptr container = expr();
+        if (current().type != token_type::DO)
+            throw bs_invalid_syntax_exception{
+                expected_message("'do' before for body", current()),
+                source_code_,
+                current().start,
+                current().end
+            };
+        advance();
+
+        node_ptr body = block();
+        return std::make_unique<foreach_node>(std::move(target), std::move(container), std::move(body),
+                                              span{start_pos, body->where.end});
+    }
+
+    throw bs_invalid_syntax_exception{
+        expected_message("'=' or 'in' after loop variable", current()),
+        source_code_,
+        current().start,
+        current().end
+    };
 }
 
 node_ptr parser::if_stmt() {
@@ -225,7 +293,9 @@ node_ptr parser::fn_stmt() {
             expected_message("'('", current()), source_code_, current().start, current().end
         };
     advance();
+
     std::vector<parameter> params;
+    std::unordered_set<std::string> params_name;
 
     if (current().type != token_type::RPARN)
         for (;;) {
@@ -233,7 +303,8 @@ node_ptr parser::fn_stmt() {
                 throw bs_invalid_syntax_exception{
                     expected_message("parameter name", current()), source_code_, current().start, current().end
                 };
-            const std::string var_name = advance().literal;
+            token param_t = advance();
+            const std::string &var_name = param_t.literal;
             bool is_variadic = false;
             if (current().type == token_type::ELLIPSIS) {
                 is_variadic = true;
@@ -243,10 +314,18 @@ node_ptr parser::fn_stmt() {
                     token_type::RPARN)
                     throw bs_invalid_syntax_exception{
                         expected_message("')' after variadic parameter", current()),
-                        source_code_, current().start, current().end
+                        source_code_, param_t.start, param_t.end
                     };
             }
-            params.push_back(parameter{var_name, is_variadic});
+
+            if (params_name.contains(var_name))
+                throw bs_invalid_syntax_exception{
+                    "duplicate parameter name '" + var_name + "' in function definition",
+                    source_code_, current().start, current().end
+                };
+
+            params_name.insert(var_name);
+            params.push_back(parameter{std::move(param_t), is_variadic});
             if (current().type != token_type::COMMA) break;
             advance();
             if (current().type == token_type::RPARN) break;
@@ -324,7 +403,8 @@ node_ptr parser::expr() {
 }
 
 node_ptr parser::assignment() {
-    node_ptr left = logic_or();
+    node_ptr left = expr_list();
+
     if (match({
                   token_type::EQUALS, token_type::PLUS_EQ, token_type::SUB_EQ, token_type::MUL_EQ, token_type::DIV_EQ,
                   token_type::MOD_EQ, token_type::POW_EQ
@@ -332,32 +412,58 @@ node_ptr parser::assignment() {
         const token op = advance();
         node_ptr value = expr();
 
-        if (const auto var_node = dynamic_cast<const var_access_node *>(left.get()))
-            return std::make_unique<var_assign_node>(token{
-                                                         var_node->name, token_type::IDENTIFIER, var_node->where.start,
-                                                         var_node->where.end
-                                                     }, op.type, std::move(value));
+        if (op.type != token_type::EQUALS && dynamic_cast<expr_list_node *>(left.get()))
+            throw bs_invalid_syntax_exception{
+                "cannot use compound assignment with destructuring assignment",
+                source_code_,
+                op.start,
+                op.end
+            };
 
 
-        if (const auto sub_node = dynamic_cast<subscript_node *>(left.get())) {
-            const position start_pos = sub_node->where.start;
-            const position end_pos = value->where.end;
+        if (const node *invalid = find_first_invalid_target(op.type != token_type::EQUALS, left.get()))
+            throw bs_invalid_syntax_exception{
+                "invalid assignment target", source_code_, invalid->where.start, invalid->where.end
+            };
 
-            const auto concrete_sub_node = std::unique_ptr<subscript_node>(
-                dynamic_cast<subscript_node *>(left.release()));
+        if (dynamic_cast<const expr_list_node *>(left.get()))
+            return std::make_unique<destructuring_assign_node>(std::move(left), std::move(value));
 
-            return std::make_unique<subscript_assign_node>(
-                std::move(concrete_sub_node->left),
-                std::move(concrete_sub_node->index),
-                op.type,
-                std::move(value),
-                span{start_pos, end_pos}
-            );
-        }
-
-        throw bs_invalid_syntax_exception{"invalid assignment target", source_code_, op.start, op.end};
+        return std::make_unique<var_assign_node>(std::move(left), op.type, std::move(value));
     }
     return left;
+}
+
+node_ptr parser::expr_list() {
+    node_ptr first = logic_or();
+
+    if (current().type != token_type::COMMA)
+        return first;
+
+    std::vector<node_ptr> values;
+    values.push_back(std::move(first));
+
+    while (current().type == token_type::COMMA) {
+        advance();
+
+        if (current().type == token_type::EQUALS)
+            break;
+        if (current().type == token_type::RPARN)
+            break;
+
+        values.push_back(logic_or());
+    }
+
+    auto where = span{
+        values.front()->where.start,
+        values.back()->where.end
+    };
+
+    return std::make_unique<expr_list_node>(std::move(values), where);
+}
+
+node_ptr parser::expr_atom() {
+    return logic_or();
 }
 
 node_ptr parser::logic_or() {
@@ -439,7 +545,12 @@ node_ptr parser::postfix() {
             std::vector<node_ptr> args;
             if (current().type != token_type::RPARN)
                 for (;;) {
-                    args.push_back(expr());
+                    const bool unpack = current().type == token_type::MULTIPLY;
+                    if (unpack) advance();
+
+                    if (unpack) args.push_back(std::make_unique<unpack_node>(expr_atom()));
+                    else args.push_back(expr_atom());
+
                     if (current().type != token_type::COMMA) break;
                     advance();
                     if (current().type == token_type::RPARN) break;
@@ -461,7 +572,7 @@ node_ptr parser::postfix() {
             advance();
 
             if (current().type != token_type::TILDE)
-                start = expr();
+                start = expr_atom();
 
             if (current().type == token_type::RBRACKET) {
                 if (!start)
@@ -474,14 +585,14 @@ node_ptr parser::postfix() {
             } else if (current().type == token_type::TILDE) {
                 advance();
                 if (current().type != token_type::COLON && current().type != token_type::RBRACKET)
-                    end = expr();
+                    end = expr_atom();
                 if (current().type == token_type::COLON) {
                     advance();
                     if (current().type == token_type::RBRACKET)
                         throw bs_invalid_syntax_exception{
                             expected_message("step", current()), source_code_, current().start, current().end
                         };
-                    step = expr();
+                    step = expr_atom();
                 }
 
                 if (current().type != token_type::RBRACKET)
@@ -561,7 +672,7 @@ node_ptr parser::list_literal() {
 
     if (current().type != token_type::RBRACKET)
         for (;;) {
-            args.push_back(expr());
+            args.push_back(expr_atom());
             if (current().type != token_type::COMMA) break;
             advance();
             if (current().type == token_type::RBRACKET) break;
@@ -585,7 +696,7 @@ node_ptr parser::ternary() {
 
     advance();
 
-    node_ptr then_branch = expr();
+    node_ptr then_branch = expr_atom();
     if (current().type != token_type::ELSE)
         throw bs_invalid_syntax_exception{
             expected_message("'else' in if expression", current()),
@@ -593,7 +704,7 @@ node_ptr parser::ternary() {
         };
     advance();
 
-    node_ptr false_branch = expr();
+    node_ptr false_branch = expr_atom();
     const position end_pos = false_branch->where.end;
 
     return std::make_unique<if_node>(std::move(condition), std::move(then_branch), std::move(false_branch),

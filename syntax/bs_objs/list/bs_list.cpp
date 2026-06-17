@@ -8,6 +8,7 @@
 #include <sstream>
 #include <unordered_set>
 
+#include "bs_list_iterator.h"
 #include "../../utils.h"
 #include "../number/bs_number.h"
 #include "../../interpreter/interpreter.h"
@@ -31,14 +32,14 @@ bs_obj::bs_obj_ptr bs_list::subscript(interpreter &visitor, const bs_obj_ptr &in
     const auto idx_number = dynamic_cast<const bs_number *>(index.get());
     if (!idx_number)
         throw std::runtime_error{"list index must be a number, got " + index->type_name()};
-    const double value = idx_number->value();
-    if (!bs_number::is_int(value))
+
+    if (!idx_number->is_int())
         throw std::runtime_error{"list index must be an integer, got " + idx_number->to_string()};
 
-    int idx = static_cast<int>(value);
+    int64_t idx = idx_number->as_int();
 
     if (idx < 0)
-        idx = static_cast<int>(elements_.size()) + idx;
+        idx = static_cast<int64_t>(elements_.size()) + idx;
 
     if (idx < 0 || static_cast<size_t>(idx) >= elements_.size())
         throw std::runtime_error{
@@ -53,13 +54,13 @@ void bs_list::set_subscript(interpreter &visitor, const bs_obj_ptr &index, const
     const auto idx_number = dynamic_cast<const bs_number *>(index.get());
     if (!idx_number)
         throw std::runtime_error{"list index must be a number, got " + index->type_name()};
-    const double val = idx_number->value();
-    if (!bs_number::is_int(val))
+
+    if (!idx_number->is_int())
         throw std::runtime_error{"list index must be an integer, got " + idx_number->to_string()};
 
-    int idx = static_cast<int>(val);
+    int64_t idx = idx_number->as_int();
     if (idx < 0)
-        idx = static_cast<int>(elements_.size()) + idx;
+        idx = static_cast<int64_t>(elements_.size()) + idx;
 
     if (idx < 0 || static_cast<size_t>(idx) >= elements_.size())
         throw std::runtime_error{
@@ -158,16 +159,17 @@ bs_obj_ptr bs_list::mul(interpreter &visitor, const bs_obj_ptr &rhs) const {
     return bs_obj::mul(visitor, rhs);
 }
 
-bs_obj::bs_obj_ptr bs_list::slice(interpreter &visitor, const int start, const int end, const int step) const {
+bs_obj::bs_obj_ptr bs_list::slice(interpreter &visitor, const int64_t start, const int64_t end,
+                                  const int64_t step) const {
     std::vector<bs_obj_ptr> sliced_elements;
     sliced_elements.reserve(std::abs(end - start) / std::abs(step) + 1);
 
     if (step > 0)
-        for (int i = start; i < end; i += step)
+        for (int64_t i = start; i < end; i += step)
             sliced_elements.push_back(elements_[i]);
 
     else
-        for (int i = start; i > end; i += step)
+        for (int64_t i = start; i > end; i += step)
             sliced_elements.push_back(elements_[i]);
 
 
@@ -182,6 +184,10 @@ size_t bs_list::size() const {
     return elements_.size();
 }
 
-bs_obj::bs_obj_ptr bs_list::get(const size_t idx) {
+bs_obj::bs_obj_ptr bs_list::get(const size_t idx) const {
     return elements_[idx];
+}
+
+std::unique_ptr<bs_iterator> bs_list::iter() const {
+    return std::make_unique<bs_list_iterator>(*this);
 }

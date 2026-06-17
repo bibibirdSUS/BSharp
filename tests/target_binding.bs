@@ -1,0 +1,142 @@
+print("=== target binding test ===")
+
+
+# -------------------------
+# basic assignment
+# -------------------------
+
+a = 10
+assert(a == 10)
+
+a += 5
+assert(a == 15)
+
+a -= 3
+assert(a == 12)
+
+a *= 2
+assert(a == 24)
+
+a /= 4
+assert(a == 6)
+
+a %= 4
+assert(a == 2)
+
+a ^= 3
+assert(a == 8)
+
+
+# -------------------------
+# subscript assignment
+# -------------------------
+
+lst = [1, 2, 3]
+
+lst[0] = 10
+assert(lst[0] == 10)
+
+lst[1] += 5
+assert(lst[1] == 7)
+
+lst[2] *= 2
+assert(lst[2] == 6)
+
+
+# -------------------------
+# destructuring assignment
+# -------------------------
+
+a, b = [100, 200]
+
+assert(a == 100)
+assert(b == 200)
+
+x, y, z = [1, 2, 3]
+
+assert(x == 1)
+assert(y == 2)
+assert(z == 3)
+
+
+# -------------------------
+# foreach
+# -------------------------
+
+sum = 0
+
+for i in [1, 2, 3, 4, 5] do
+    sum += i
+
+assert(sum == 15)
+
+
+# -------------------------
+# foreach destructuring
+# -------------------------
+
+pairs = [
+    [1, 2],
+    [3, 4],
+    [5, 6]
+]
+
+sum = 0
+
+for a, b in pairs do
+    sum += a + b
+
+assert(sum == 21)
+
+
+# -------------------------
+# foreach scope
+# -------------------------
+
+i = 999
+
+for i in [1, 2, 3] do
+    i
+
+assert(i == 999)
+
+
+# -------------------------
+# destructuring overwrite
+# -------------------------
+
+a = 0
+b = 0
+
+a, b = [7, 8]
+
+assert(a == 7)
+assert(b == 8)
+
+
+# -------------------------
+# foreach destructuring overwrite
+# -------------------------
+
+a = 100
+b = 200
+
+for a, b in [[1, 2]] do
+    assert(a == 1)
+    assert(b == 2)
+
+assert(a == 100)
+assert(b == 200)
+
+print("=== nested destructuring ===")
+
+a, b = [[1, 2], [3, 4]]
+
+assert(a[0] == 1)
+assert(a[1] == 2)
+
+assert(b[0] == 3)
+assert(b[1] == 4)
+
+print("all tests passed")
+

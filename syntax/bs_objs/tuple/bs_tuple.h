@@ -1,23 +1,23 @@
 //
-// Created by bibibird on 2026/5/22.
+// Created by bibib on 2026/6/17.
 //
 
-#ifndef BSHARP_BS_LIST_H
-#define BSHARP_BS_LIST_H
+#ifndef BSHARP_BS_TUPLE_H
+#define BSHARP_BS_TUPLE_H
+
+
 #include "../bs_obj.h"
 
 
-class bs_list : public bs_obj {
+class bs_tuple : public bs_obj {
 public:
-    explicit bs_list(std::vector<bs_obj_ptr> elements);
+    explicit bs_tuple(std::vector<bs_obj_ptr> elements);
 
     [[nodiscard]] bs_obj_ptr copy() const override;
 
     [[nodiscard]] std::string type_name() const override;
 
     bs_obj_ptr subscript(interpreter &visitor, const bs_obj_ptr &index) const override;
-
-    void set_subscript(interpreter &visitor, const bs_obj_ptr &index, const bs_obj_ptr &value) override;
 
     [[nodiscard]] std::string to_string() const override;
 
@@ -33,17 +33,17 @@ public:
 
     [[nodiscard]] bs_obj_ptr mul(interpreter &visitor, const bs_obj_ptr &rhs) const override;
 
-    [[nodiscard]] bs_obj_ptr slice(interpreter &visitor, int start, int end, int step) const override;
-
-    void append(bs_obj_ptr obj);
+    [[nodiscard]] bs_obj_ptr slice(interpreter &visitor, int64_t start, int64_t end, int64_t step) const override;
 
     size_t size() const;
 
-    bs_obj_ptr get(size_t idx);
+    bs_obj_ptr get(size_t idx) const;
+
+    [[nodiscard]] std::unique_ptr<bs_iterator> iter() const override;
 
 private:
-    std::vector<bs_obj_ptr> elements_;
+    const std::vector<bs_obj_ptr> elements_;
 };
 
 
-#endif //BSHARP_BS_LIST_H
+#endif //BSHARP_BS_TUPLE_H

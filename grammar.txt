@@ -1,49 +1,180 @@
 program = statements
 statements = (NEWLINE | statement)*
 
-statement = if_stmt | while_stmt | until_stmt | for_stmt | fn_stmt
-          | return_stmt | break_stmt | continue_stmt | expr
+statement =
+      if_stmt
+    | while_stmt
+    | until_stmt
+    | for_stmt
+    | fn_stmt
+    | return_stmt
+    | break_stmt
+    | continue_stmt
+    | expr
 
-if_stmt = 'if' expr 'do' block ('else' 'if' expr 'do' block)* ('else' block)?
+if_stmt =
+    'if' expr 'do' block
+    ('else' 'if' expr 'do' block)*
+    ('else' block)?
+
 while_stmt = 'while' expr 'do' block
 until_stmt = 'until' expr 'do' block
-for_stmt = 'for' IDENTIFIER '=' expr '~' expr (':' expr)? 'do' block
+
+for_stmt =
+    'for' IDENTIFIER '=' expr '~' expr (':' expr)? 'do' block
+
 return_stmt = 'return' expr?
 break_stmt = 'break'
 continue_stmt = 'continue'
 
-fn_stmt = 'fn' IDENTIFIER '(' params? ')' fn_body
-fn_body = '=' expr | 'do' block
+fn_stmt =
+    'fn' IDENTIFIER '(' params? ')' fn_body
 
-params = IDENTIFIER (',' IDENTIFIER)*
-args = expr (',' expr)*
+fn_body =
+      '=' expr
+    | 'do' block
 
-block = statement | (NEWLINE INDENT statements DEDENT)
+params =
+    parameter (',' parameter)*
+
+parameter =
+    IDENTIFIER ('...')?
+
+block =
+      statement
+    | (NEWLINE INDENT statements DEDENT)
+
+
+
+# =====================
+# Expression hierarchy
+# =====================
 
 expr = assignment
-assignment = IDENTIFIER ('=' | '+=' | '-=' | '*=' | '/=' | '%=' | '^=') assignment | logic_or
 
-logic_or = logic_xor ('or' logic_xor)*
-logic_xor = logic_and ('xor' logic_and)*
-logic_and = comparison ('and' comparison)*
+assignment =
+      destructuring_assignment
+    | single_assignment
+    | expr_list
 
-comparison = sum (('>=' | '<=' | '>' | '<' | '==' | '!=') sum)*
+destructuring_assignment =
+    IDENTIFIER (',' IDENTIFIER)+ '=' assignment
 
-sum = term (('+' | '-') term)*
-term = power (('*' | '/' | '%') power)*
-power = unary ('^' power)?
-unary = ('+' | '-' | 'not') unary | postfix
+single_assignment =
+    assignment_target
+    ('=' | '+=' | '-=' | '*=' | '/=' | '%=' | '^=')
+    assignment
+
+assignment_target =
+      IDENTIFIER
+    | subscript_target
+
+subscript_target =
+    postfix '[' expr ']'
+
+
+
+# =====================
+# Comma expressions
+# =====================
+
+expr_list =
+    logic_or (',' logic_or)*
+
+
+
+# =====================
+# Boolean operators
+# =====================
+
+logic_or =
+    logic_xor ('or' logic_xor)*
+
+logic_xor =
+    logic_and ('xor' logic_and)*
+
+logic_and =
+    comparison ('and' comparison)*
+
+
+
+# =====================
+# Comparison chain
+# =====================
+
+comparison =
+    sum (('>=' | '<=' | '>' | '<' | '==' | '!=') sum)*
+
+
+
+# =====================
+# Arithmetic
+# =====================
+
+sum =
+    term (('+' | '-') term)*
+
+term =
+    power (('*' | '/' | '%') power)*
+
+power =
+    unary ('^' power)?
+
+unary =
+      ('+' | '-' | 'not') unary
+    | postfix
+
+
+
+# =====================
+# Postfix operators
+# =====================
+
+postfix =
+    primary (
+          '(' arg_list? ')'
+        | '[' (logic_or | slice_range) ']'
+        | '!'
+    )*
+
+
+
+# =====================
+# Argument lists
+# =====================
+
+arg_list =
+    logic_or (',' logic_or)*
+
+
+
+# =====================
+# Slice
+# =====================
+
+slice_range =
+    logic_or? '~'
+    logic_or?
+    (':' logic_or?)?
+
+
+# =====================
+# Primary
+# =====================
 
 primary =
-    NUMBER
-  | STRING
-  | IDENTIFIER
-  | 'true'
-  | 'false'
-  | 'null'
-  | if_expr
-  | '(' expr ')'
-  | list_literal
+      NUMBER
+    | STRING
+    | IDENTIFIER
+    | 'true'
+    | 'false'
+    | 'null'
+    | if_expr
+    | '(' expr ')'
+    | list_literal
 
-list_literal = '[' args? ']'
-if_expr = 'if' expr 'do' expr 'else' expr
+list_literal =
+    '[' arg_list? ']'
+
+if_expr =
+    'if' expr 'do' expr 'else' expr
